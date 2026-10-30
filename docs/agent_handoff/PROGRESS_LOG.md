@@ -73,3 +73,7 @@ Timestamps are IST.
 - Wrote `docs/TEAM_PLAN.md`, the shareable plan for the teammate. Workflow: code and unit tests on Harish's laptop (venv) → push → teammate runs `docker compose up` and the checklist → sends back output. Backups: GitHub Codespaces, plus a GitHub Actions compose smoke test.
 - `gh` CLI is not installed locally; the agent can't push or check CI by itself unless git credentials are configured.
 - The promised items `scripts/smoke_test.py`, the `ingest` compose service and the Actions workflow must be built in Phase 0.
+
+## 2026-10-30 10:46 — Pushed to GitHub
+- Commit `22c6c5e` pushed to `origin/main`: corpus PDFs, SOURCES.md, CORPUS_CONFIRMATION.md, TEAM_PLAN.md, agent_handoff/. Removed .DS_Store and added it to .gitignore.
+- Git push works from this machine (account theDEMIGOD600).
