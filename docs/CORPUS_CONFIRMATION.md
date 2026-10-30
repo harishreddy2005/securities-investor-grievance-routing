@@ -75,3 +75,12 @@ All excerpts are **verbatim** (footnote markers dropped, whitespace normalised) 
 - *"My mutual fund redemption proceeds haven't been paid for 3 weeks"* → `assign_to_entity` (AMC). Basis: `SEBI-MF-1996 Reg 53`, `Reg 60A` (21 calendar days); SCORES para 1.2.
 - *"My bank failed a UPI payment to my broker, and the broker also executed a trade I didn't authorise"* → **escalate** (splits across RBI and SEBI; F7).
 - *"My health insurance claim was rejected"* → **escalate** (IRDAI is out of corpus. SCORES 5.3 names IRDAI, but no IRDAI document is in the corpus to route against; F7).
+
+## Phase 0 implementation clarification (2026-10-30)
+
+Fresh extraction distinguishes operative MF Regulation 53 on PDF page 80 from
+historical wording reproduced in an amendment footnote on page 79. The operative
+text delegates payment periods and delayed-payment interest rates to the Board.
+The mutual fund contrast test therefore checks the AMC route and the Regulation
+60A 21-calendar-day **grievance** timeline, without asserting historical payment
+deadlines. The RBI FD reference answer and bank-first requirement remain as above.

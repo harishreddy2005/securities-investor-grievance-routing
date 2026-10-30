@@ -1,0 +1,33 @@
+name: Phase 0 tests
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+      - name: HTTP smoke with local test dependencies
+        run: python scripts/local_e2e.py
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - name: Start with real local semantic embeddings
+        run: docker compose up --build -d --wait --wait-timeout 900
+      - name: HTTP end-to-end smoke test
+        run: docker compose exec -T api python scripts/smoke_test.py
+      - name: Repeat ingestion is idempotent
+        run: docker compose run --rm --no-deps ingest
+      - name: Show logs
+        if: always()
+        run: docker compose ps -a && docker compose logs --no-color --tail=200
+      - name: Stop services
+        if: always()
+        run: docker compose down -v

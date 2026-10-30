@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Investor Grievance Router</title>
+  <style>
+    :root{font:16px/1.6 system-ui;color:#172b44;background:#f2f5f8}body{max-width:900px;margin:40px auto;padding:0 20px}h1{line-height:1.2}form,section{background:white;padding:24px;border-radius:12px;margin:20px 0;border:1px solid #dde3eb}label{display:block;margin:12px 0 4px;font-weight:600}input,textarea,select,button{font:inherit;box-sizing:border-box}input:not([type=checkbox]),textarea,select{width:100%;padding:10px;border:1px solid #9aabba;border-radius:5px}button{padding:10px 18px;margin:12px 8px 0 0;border:0;border-radius:6px;background:#164d77;color:white;cursor:pointer}button:disabled{opacity:.5}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f2f5f8;padding:14px;font:14px/1.6 system-ui}.note{color:#53657c}.error{color:#a02525}#status{min-height:2em}a{color:#164d77}
+  </style>
+</head>
+<body>
+  <h1>Investor Grievance Router</h1>
+  <p class="note">Phase 0 · Synthetic complaints only · Routing advice for review by a grievance officer</p>
+  <button type="button" data-demo="fd">Bank FD example</button><button type="button" data-demo="mf">Mutual fund example</button><button type="button" data-demo="unknown">Insufficient evidence example</button>
+  <form id="complaint-form">
+    <label for="entity">Entity name</label><input id="entity" required maxlength="200" value="Example Bank Ltd">
+    <label for="complaint">Complaint</label><textarea id="complaint" required minlength="20" maxlength="5000" rows="5"></textarea>
+    <label><input type="checkbox" id="approached"> I already complained in writing to the entity</label>
+    <p class="note">Select the checkbox above to add dates and response details for an earlier complaint.</p>
+    <fieldset id="prior-details" disabled style="border:0;padding:0;margin:0">
+    <label for="prior-date">Date the entity received the complaint (if known)</label><input id="prior-date" type="date" min="1900-01-01">
+    <label for="reply">Entity response</label><select id="reply"><option value="none">No reply</option><option value="pending">Pending</option><option value="rejected">Rejected</option><option value="unsatisfactory">Unsatisfactory</option><option value="resolved">Resolved</option></select>
+    <label for="reply-date">Response date (if received)</label><input id="reply-date" type="date" min="1900-01-01">
+    </fieldset>
+    <button id="submit" type="submit">Submit complaint</button>
+  </form>
+  <p id="status" role="status" aria-live="polite"></p>
+  <section id="result" hidden></section>
+  <p><a href="/docs">API documentation</a> · <a href="/health">Service health</a></p>
+  <script>
+    const $ = id => document.getElementById(id);
+    const demos = {
+      fd: ["Example Bank Ltd", "I invested in a fixed deposit through my bank's app. The interest credited is lower than what I was promised. I want to complain to SEBI."],
+      mf: ["Example AMC", "My mutual fund redemption proceeds haven't been paid for 3 weeks."],
+      unknown: ["Example Insurance", "My health insurance claim was rejected and I need help raising a complaint."]
+    };
+    function syncPriorDetails(){
+      const approached=$('approached').checked;$('prior-details').disabled=!approached;
+      if(!approached){$('prior-date').value='';$('reply').value='none';$('reply-date').value='';}
+      validateDates();
+    }
+    function validateDates(){
+      const now=new Date();const today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      for(const id of ['prior-date','reply-date']){
+        const input=$(id);input.max=today;input.setCustomValidity('');
+        if(input.value && (input.value<'1900-01-01' || input.value>today))input.setCustomValidity('Enter a date between 1 January 1900 and today.');
+      }
+      const prior=$('prior-date').value,reply=$('reply-date').value;
+      if(reply && !prior)$('reply-date').setCustomValidity('Enter the date the entity received your complaint before adding a response date.');
+      else if(prior && reply && reply<prior)$('reply-date').setCustomValidity('The response date cannot be before the complaint date.');
+    }
+    $('approached').addEventListener('change',syncPriorDetails);
+    for(const id of ['prior-date','reply-date'])$(id).addEventListener('input',validateDates);
+    $('complaint-form').addEventListener('invalid',event=>{
+      $('status').className='error';$('status').textContent=event.target.validationMessage;
+    },true);
+    function preset(key){[$('entity').value,$('complaint').value]=demos[key];$('approached').checked=false;syncPriorDetails();}
+    document.querySelectorAll('[data-demo]').forEach(b=>b.onclick=()=>preset(b.dataset.demo));preset('fd');
+    function add(parent,tag,text){const e=document.createElement(tag);e.textContent=text;parent.appendChild(e);return e;}
+    function render(result){const root=$('result');root.replaceChildren();root.hidden=false;
+      add(root,'h2',result.target_authority);add(root,'p',result.uncertain?'Human review required':result.routing.replaceAll('_',' '));
+      add(root,'h3','What to do now');add(root,'p',result.immediate_action);
+      add(root,'h3','Reasoning');add(root,'p',result.rationale);
+      add(root,'p','Product: '+result.product+' · Entity: '+result.entity_type+' · Eligibility: '+result.eligibility.replaceAll('_',' '));
+      add(root,'h3','Next steps');const list=add(root,'ol','');result.next_steps.forEach(s=>add(list,'li',s));
+      add(root,'h3','Regulatory evidence');result.regulatory_citations.forEach(c=>{const d=add(root,'details','');add(d,'summary',`${c.document_id} · §${c.section} · PDF page ${c.page}`);add(d,'pre',c.quote);add(d,'small',`${c.filename} | ${c.chunk_id} | SHA-256: ${c.sha256}`);});
+      add(root,'p',result.verification);const trace=add(root,'details','');add(trace,'summary','Agent handoff and retrieval trace');result.agent_trace.forEach(e=>add(trace,'p',e.agent+' → '+e.action+': '+e.detail));
+    }
+    function validationMessage(detail){
+      if(typeof detail==='string')return detail;
+      const labels={entity_complaint_date:'Complaint date',entity_response_date:'Response date',incident_date:'Incident date',complaint_text:'Complaint',entity_name:'Entity name'};
+      if(Array.isArray(detail))return detail.map(error=>{
+        const field=(error.loc||[]).filter(part=>part!=='body').pop();const label=labels[field]||field;
+        return (label?label+': ':'')+(error.msg||'Check your input').replace(/^Value error, /,'');
+      }).join('\n');
+      return 'Unable to submit the complaint. Please check your input and try again.';
+    }
+    async function json(url,options){const response=await fetch(url,options);const body=await response.json();if(!response.ok)throw Error(validationMessage(body.detail));return body;}
+    $('complaint-form').onsubmit=async event=>{event.preventDefault();validateDates();if(!$('complaint-form').reportValidity())return;$('submit').disabled=true;$('result').hidden=true;$('status').className='';
+      try{const payload={complaint_text:$('complaint').value,entity_name:$('entity').value,approached_entity_first:$('approached').checked};
+        if(payload.approached_entity_first){payload.entity_response=$('reply').value;if($('prior-date').value)payload.entity_complaint_date=$('prior-date').value;if($('reply-date').value)payload.entity_response_date=$('reply-date').value;}
+        const job=await json('/api/v1/grievances',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const deadline=Date.now()+240000;
+        while(Date.now()<deadline){const state=await json(job.status_url);$('status').textContent=`Run ${job.run_id}: ${state.status}`;
+          if(state.status==='finished'){render(await json(job.result_url));return;}
+          if(['failed','stopped','canceled'].includes(state.status))throw Error(state.error||'Processing failed');
+          await new Promise(resolve=>setTimeout(resolve,1000));}
+        throw Error('Polling timed out. Check the run status at '+job.status_url);
+      }catch(error){$('status').className='error';$('status').textContent=error.message;}finally{$('submit').disabled=false;}
+    };
+  </script>
+</body>
+</html>

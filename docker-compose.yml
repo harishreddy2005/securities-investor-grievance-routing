@@ -1,0 +1,76 @@
+x-app: &app
+  build: .
+  env_file: .env
+  volumes:
+    - index-data:/data/index
+    - model-cache:/home/router/.cache
+
+services:
+  redis:
+    image: redis:7.4.2-alpine
+    command: [redis-server, --appendonly, 'yes', --appendfsync, everysec]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  llm-stub:
+    <<: *app
+    command: [uvicorn, app.stub:app, --host, 0.0.0.0, --port, '8001']
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  ingest:
+    <<: *app
+    command: [python, -m, app.cli.ingest]
+    restart: 'no'
+
+  worker:
+    <<: *app
+    command: [python, -m, app.worker]
+    depends_on:
+      redis:
+        condition: service_healthy
+      llm-stub:
+        condition: service_healthy
+      ingest:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -m, app.worker_health]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    stop_grace_period: 190s
+
+  api:
+    <<: *app
+    ports:
+      - '8000:8000'
+    depends_on:
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+      ingest:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=4)"]
+      interval: 15s
+      timeout: 8s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  index-data:
+  model-cache:
+  redis-data:

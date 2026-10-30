@@ -65,3 +65,30 @@ URLs once running: App/UI `:8000` · API docs `:8000/docs` · Grafana `:3000` ·
 ## 6. Status (as of 30 Oct)
 - ✅ Spec analysed, plan approved, corpus downloaded and verified, §4.1 reference answer written.
 - ⏳ Next: Phase 0 code. The first push for the teammate to test will come with the steps above.
+
+## Phase 0 implementation status (2026-10-30)
+
+Phase 0 code, Docker configuration, tests and run documentation are implemented.
+Local verification: 34 Python tests passed; real semantic ingestion produced 539
+chunks; the 4-scenario HTTP smoke passed with real semantic embeddings, HTTP model
+stub and TCP fakeredis/RQ SimpleWorker. This is not a real Redis/container result.
+Docker engine access remains unavailable on this development machine, so the
+teammate's Docker smoke is the remaining demonstration gate. No commit/push yet.
+
+Current startup is automatic: copy `.env.example` to `.env`, then run
+`docker compose up --build -d --wait --wait-timeout 900`. Ingestion is a one-shot
+service and should show **Exited (0)**; four long-running services should be
+healthy. Then run `docker compose exec -T api python scripts/smoke_test.py`.
+The earlier manual ingest command remains safe but is no longer necessary.
+Grafana, Prometheus, Jaeger and cAdvisor are later-phase services and are not
+available in the Phase 0 stack. Use README.md for the current teammate checklist.
+
+## Local Docker verification completed (2026-10-30)
+
+This supersedes the earlier Docker-blocked status: Docker Desktop was started on
+the user's device. Actual Compose build/start passed; all four long-running
+services are healthy and ingest exited 0 with 539 semantic chunks. The real Docker
+smoke passed all four scenarios before and after restarting Redis, API and worker.
+The original FD result survived the restart. Phase 0 is ready for the team's
+minimum-workflow demonstration; later-phase features remain pending. Containers
+are left running at http://localhost:8000. No commit or push has been performed.

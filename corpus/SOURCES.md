@@ -28,3 +28,12 @@ Official documents only, never paraphrased or synthesised. Files are verified by
 - RBI-IOS **cl. 9** (p6): Grounds of Complaint, i.e. any customer aggrieved by an act or omission of a Regulated Entity resulting in deficiency in service.
 - RBI-IOS **cl. 10(2)(a)** (p6–7): not maintainable unless the customer first complained in writing to the RE and it was rejected, the reply was unsatisfactory, or there was **no reply within 30 days**. Must be filed within **1 year** of the reply (1 year + 30 days if no reply).
 - **Note:** the RBI scheme does NOT name "fixed deposit" or "interest". The §4.1 link is inferential: FD → bank product → bank = Regulated Entity (3(1)(j)) → interest shortfall = deficiency in service (3(1)(f), 9), combined with SCORES para 5.3 excluding RBI matters. The agent must establish the product and entity, which is exactly what the spec's §4.1 asks for.
+
+## 2026-10-30 extraction clarification
+
+The 1996 consolidation's **page 79 contains historical Regulation 53 wording in
+an amendment footnote** (15 days / 10 working days). The **operative Regulation 53
+is on page 80** and requires dividend and redemption transfers within periods
+specified by the Board, with interest at a Board-specified rate for delay. Do not
+present the page-79 historical figures as current rules. Phase 0 cites page 80 and
+uses only the verified Regulation 60A 21-calendar-day **grievance** redressal timeline.

@@ -77,3 +77,51 @@ Timestamps are IST.
 ## 2026-10-30 10:46 — Pushed to GitHub
 - Commit `22c6c5e` pushed to `origin/main`: corpus PDFs, SOURCES.md, CORPUS_CONFIRMATION.md, TEAM_PLAN.md, agent_handoff/. Removed .DS_Store and added it to .gitignore.
 - Git push works from this machine (account theDEMIGOD600).
+
+## 2026-10-30 — Phase 0 implementation started
+- Cloned the user's repository into the empty Windows workspace; inspected all tracked source, config, handoff/spec notes and active PDF text. No existing application implementation beyond the scaffold was discarded; unsupported keyword routing/citations were replaced.
+- Docker CLI 29.8.2 exists but `docker info` cannot connect to the Windows docker_engine named pipe. Docker execution remains unverified.
+- Added hash-checked allowlist ingestion of the 3 active PDFs, page chunks, exact reviewed clause anchors, persistent Chroma and LangChain local embedding adapter. Parsing produced 539 chunks. Archive excluded.
+- New verified correction: MF page 79's Reg 53 payment periods are historical amendment-footnote text. Operative Reg 53 is on page 80 and delegates payment periods to the Board. Added an exact page-80 anchor and regression test.
+- Added two-agent LangGraph investigator/verifier, bounded tools, structured handoff/output, citation auditing, honest escalation, bank-first and filing-limit advisory states; default deterministic HTTP model stub requires no API key.
+- Added Redis/RQ queue and worker isolation, asynchronous API, validation/quarantine, UI, Docker Compose automatic ingestion, startup health checks, smoke script, Python and Compose CI jobs, data contract and runbook.
+- Local dependency setup required an approved network-enabled pip install; early test attempts failed due to incomplete installation. After installation, `python -m pytest tests/test_corpus.py -q`: 4 passed; `python -m pytest tests/test_agents.py -q`: 17 passed. Chroma emitted one Python 3.14 deprecation warning. API/queue tests and final checks follow.
+- No commit or push performed. Latest TEAM_PLAN uses Phase 0–4; later features remain out of this Phase 0 scope.
+
+## 2026-10-30 — Phase 0 verification completed locally
+- Final full suite: `.venv/Scripts/python -m pytest -q` passed 34 tests. Two upstream deprecation warnings remain on Python 3.14 (Starlette/AnyIO and Chroma asyncio introspection); no application test failed. API tests execute real RQ jobs against fakeredis and verify queued → started → finished/failed behavior, results, validation/quarantine, and Redis-outage handling.
+- Real semantic ingestion completed: 539 chunks, 53.39 seconds including the first ~79 MB model download; corpus hashes recorded in the index manifest. First download attempt hit transient DNS failure; DNS resolved on checking and the retried download succeeded. A local CLI attempt after copying Docker .env used container corpus paths; overriding CORPUS_DIR with the workspace path corrected it. Local development commands must account for Docker-specific .env paths.
+- Real semantic search and two-agent FD reference passed, with exact SCORES 5.3 and RBI-IOS 3(1)(j), 3(1)(f), 9, 10(2)(a), 10(1)(a) citations; bank_first result confirmed.
+- `python scripts/local_e2e.py`: passed all 4 HTTP smoke scenarios with test embeddings, TCP fakeredis, actual HTTP stub, and RQ SimpleWorker.
+- `python scripts/local_e2e.py --semantic`: passed all 4 HTTP smoke scenarios with real semantic embeddings, TCP fakeredis, actual HTTP stub, and RQ SimpleWorker. This verifies real HTTP submission/polling/results and UI serving, not production Redis or the Linux SpawnWorker. TCP fakeredis produced a transient connection-closed warning; RQ retried and completed all jobs. This simulator warning is not claimed as a Docker result.
+- The first local harness attempt found duplicate worker registration and Windows file-lock cleanup errors. Fixed the harness to wait for worker readiness, retain its index under ignored data/, and close daemon server threads. Subsequent harness runs exited successfully.
+- `docker compose config --quiet`: passed after creating the gitignored .env from .env.example. Docker client warns its host config is inaccessible, but configuration validation exits 0. `docker info` remains unable to connect to the daemon; container build/start/smoke NOT executed locally.
+- `python -m pip check`: no broken requirements. Python compileall, Node JavaScript syntax check, and git diff --check passed (Git only notes expected Windows line-ending conversion).
+- Fixed cache-volume ownership for the non-root image user; production workers use SpawnWorker and a 60-second worker TTL so idle heartbeats stay within the 120-second readiness window. Index clients explicitly disable anonymous telemetry.
+- Added Python CI (including local HTTP smoke) and a separate real Docker Compose smoke with semantic embeddings. CI has NOT run: no commit/push was authorized or performed.
+- Phase 0 code is ready for teammate Docker validation. Demo readiness remains conditional on the exact README startup/smoke checklist passing with the real Docker engine. Phases 1–4 are pending per the latest TEAM_PLAN.
+
+## 2026-10-30 — Real Docker verification on the user's device: PASSED
+- User requested running and testing on this device before sharing. Started the installed Docker Desktop via `docker desktop start` outside the restricted shell. Engine responded: Docker Desktop 4.95.0 / Docker Engine 29.8.2, Linux amd64. This resolves the earlier engine-unavailable blocker; earlier log entries describe the state at that time.
+- `docker compose up --build -d --wait --wait-timeout 900`: exit 0. Downloaded images, built all four application images, automatically ingested 539 chunks with real semantic ONNX embeddings (~55.86 seconds for ingestion), and started Redis, HTTP model stub, Linux RQ SpawnWorker and API. All four long-running services healthy; ingest exited 0.
+- `docker compose exec -T api python scripts/smoke_test.py`: exit 0, all 4 scenarios passed with real Redis and production worker: FD -> RBI/bank_first; MF -> AMC; insurance -> human; mixed bank/broker -> human. Invalid payload rejected with 422; UI served. FD reference run: f349bfec-35ce-4e3b-8dd5-6aa12aeff7c0.
+- Host `http://localhost:8000/health` returned healthy with 539 chunks. Host UI returned HTTP 200 and included the FD example. Inspected actual FD result: RBI target, bank_first, first complain in writing to the bank.
+- `docker compose run --rm --no-deps ingest`: exit 0, unchanged=true, 539 chunks.
+- Restarted project Redis, worker and API using `docker compose restart redis worker api`, then waited for healthy services. The original FD result remained available and unchanged, verifying persistence across the restart.
+- Repeated the full Docker smoke after restart: exit 0, all 4 scenarios passed again. In-container `python -m pip check`: no broken requirements.
+- Application containers are LEFT RUNNING for the user at http://localhost:8000. No application-code fix was required during actual Docker verification. Updated README, TEAM_PLAN, Phase 0 status and incident history with the resolved blocker and real results. No commit or push performed.
+
+## 2026-10-30 — Form and implausible-year regression fixed
+- User reported raw JSON validation errors when prior complaint details were filled while approached_entity_first was false, plus acceptance of year 1202.
+- Root cause: the UI left prior dates/response editable regardless of the checkbox, always submitted those fields, and rendered validation arrays as raw JSON. Backend checked only future/order constraints, with no historical sanity boundary.
+- UI now disables and clears prior details when unchecked, only includes them when checked, validates dates and response order before submission, and displays readable field-level API errors. API rejects dates before 1900-01-01 and in the future with date-field error locations. The 1900 boundary is an application input policy, not a regulatory time limit.
+- Added regression coverage for ancient incident/complaint/response dates, field-specific API rejection, and a repeatable real-browser script (optional requirements-browser.txt).
+- Full Python suite: 38 passed, 2 upstream deprecation warnings. JavaScript syntax and git whitespace checks passed.
+- Rebuilt and started Docker successfully; all four services healthy. Updated HTTP smoke against the real Docker app passed, including ancient-date rejection and all four routing scenarios.
+- Installed optional Playwright into the workspace venv and ran `python scripts/browser_smoke.py --channel msedge` against the Docker app: passed all checks. Actual headless Edge confirmed disabled/reset fields, year 1202/future/reversed-date prevention with zero POSTs, a successful checkbox-off bank-first result, and friendly API error display. No changes to the user's installed browser.
+- No commit or push performed. User should refresh the existing localhost page to load the corrected form.
+
+## 2026-10-30 — Phase 0 local commit authorized
+- User explicitly requested committing Phase 0. Reviewed all 45 changed/created files, checked whitespace, confirmed .env/data/.venv are ignored, and scanned changed source/docs for common credential patterns; none found.
+- Commit includes the working Phase 0 implementation, Docker configuration, tests, browser/date fixes, regulatory extraction clarification and verified run documentation. Latest results: 38 Python tests passed, real Edge form regression passed, and real Docker build/start/smoke/restart-persistence checks passed.
+- This authorization is for a local commit only. No GitHub push is included; Actions remains unexecuted until publication.

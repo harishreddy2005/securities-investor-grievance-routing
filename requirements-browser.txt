@@ -1,0 +1,2 @@
+# Optional browser regression script; the running app has no browser dependency.
+playwright==1.64.1
