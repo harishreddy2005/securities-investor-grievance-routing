@@ -125,3 +125,11 @@ Timestamps are IST.
 - User explicitly requested committing Phase 0. Reviewed all 45 changed/created files, checked whitespace, confirmed .env/data/.venv are ignored, and scanned changed source/docs for common credential patterns; none found.
 - Commit includes the working Phase 0 implementation, Docker configuration, tests, browser/date fixes, regulatory extraction clarification and verified run documentation. Latest results: 38 Python tests passed, real Edge form regression passed, and real Docker build/start/smoke/restart-persistence checks passed.
 - This authorization is for a local commit only. No GitHub push is included; Actions remains unexecuted until publication.
+
+## 2026-10-30 — Phase 0 completion checkpoint
+- User requested the exact completion commit message, an annotated phase-0-complete tag, a normal push to origin/main, and remote verification. Phase 1 must not begin.
+- Initial working tree was clean. Fetched origin/main and confirmed no divergence (0 ahead / 0 behind); implementation commit 8669c30 was already published. No existing local or remote phase-0-complete tag found.
+- Reviewed tracked project files and the implementation file list. No tracked local databases, vector indexes, environments or key files; common credential-pattern scan of tracked text found no matches. No unexpected changes or conflicts found.
+- Hardened .gitignore for .env variants (retaining .env.example), local credentials/private keys, database files and sidecars, and generated index/model/runtime directories outside the existing ignored data/ tree. Updated current publication documentation.
+- Completion commit contains only .gitignore and checkpoint documentation updates; the full 45-file working implementation is retained in its parent commit 8669c30. Existing verification remains 38 Python tests, actual Edge form checks, and real Docker smoke/restart-persistence checks passed. No application code changed for this checkpoint.
+- Proceed with the user's requested exact-message commit, annotated tag and normal branch/tag pushes; report the resulting immutable commit and tag verification directly to the user. No Phase 1 work included.

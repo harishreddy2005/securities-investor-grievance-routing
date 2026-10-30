@@ -1,7 +1,8 @@
 # Phase 0 implementation and verification
 
 Implementation complete; **Docker build and end-to-end smoke passed on the user's
-device** after starting Docker Desktop. GitHub publication remains pending.
+device** after starting Docker Desktop. The implementation was published as
+`8669c30`; the annotated `phase-0-complete` tag identifies the completion checkpoint.
 
 ## Implemented
 
@@ -41,7 +42,7 @@ device** after starting Docker Desktop. GitHub publication remains pending.
 | Repeat ingestion inside Docker | **Passed**: unchanged index, 539 chunks |
 | Redis/API/worker restart and persistence | **Passed**: original FD result retained; all 4 smoke scenarios passed again after restart |
 | Dependency check inside Docker | **Passed**: no broken requirements |
-| GitHub Actions execution | **Not executed: changes not pushed** |
+| GitHub Actions execution | **Not verified in this session**; publication has occurred, but no CI result is claimed |
 | Real Edge browser form regression | **Passed**: prior details reset/disabled, invalid dates blocked before submission, completed RBI submission, readable API errors |
 
 The local HTTP harness uses TCP fakeredis and RQ SimpleWorker, not a real Redis

@@ -21,9 +21,8 @@ docker compose exec -T api python scripts/smoke_test.py
 ```
 
 PowerShell: use `Copy-Item .env.example .env` instead of `cp` if preferred. Copy
-only on first setup, so existing configuration is retained. Share the Phase 0
-commit with your teammate before cloning will contain the implementation.
-Publishing the local commit to GitHub requires separate authorization.
+only on first setup, so existing configuration is retained. Phase 0 is published
+on GitHub; the annotated `phase-0-complete` tag identifies its completion checkpoint.
 
 Open **http://localhost:8000** for the UI and **http://localhost:8000/docs** for
 OpenAPI. Click **Bank FD example**, then **Submit complaint**. The page polls the
