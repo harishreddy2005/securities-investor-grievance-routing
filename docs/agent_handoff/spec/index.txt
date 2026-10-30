@@ -1,0 +1,106 @@
+ML System Design & AgentOps (UE24AM342AA5)
+Mini Project Statements
+Dept of CSE (AI & ML), PESU
+1
+Mini Project Problem Statements — Index
+Course: UE24AM342AA5 — ML System Design and AgentOps
+Component: Jackfruit (Level 3), 10 marks | Team size: 2–3 students
+Fifteen problem statements. Each team works on one. Technical terms used in all of them are defined in
+00_GLOSSARY.pdf.
+All fifteen share the same 22 requirements — A1–A8 (agent system), L1–L6 (LLMOps), D1–D8 (platform and
+deployment) — the same demonstration list and the same assessment. Only the domain, the corpus and the
+functional requirements differ.
+The difficulty in each project is agentic by construction. The case in section 4.1 cannot be resolved by a single
+retrieval pass, because the provision that decides the outcome is a modifier the request never mentions. It
+requires an agent that searches, establishes that further provisions may apply, searches again, and verifies its
+own output.
+Every corpus is free to download from a regulator, ministry, university or open-source project.
+#
+Project
+Domain
+01
+Motor Insurance Claim Intake and Triage Service
+General Insurance
+02
+Unauthorised Transaction and Card Dispute Triage Service
+Retail Banking
+03
+Health Insurance Pre-Authorisation Desk
+Health Insurance and Hospital Revenue Cycle
+04
+Air Passenger Compensation Claim Triage Service
+Aviation
+05
+Building Plan Compliance Pre-Check Service
+Urban Development and Construction
+06
+Public Procurement Bid Compliance Screening Service
+Government and Public Sector Procurement
+07
+Export Classification Check Service
+Logistics and Trade Compliance
+08
+Production Incident Triage and Runbook Assistant
+Software Operations and Site Reliability
+Engineering
+09
+Workplace Compliance Advisory Desk
+Human Resources and Employment Law
+10
+Packaged Food Label Compliance Check Service
+Food Manufacturing and Regulatory Affairs
+11
+Electricity Tariff and Billing Dispute Triage Service
+Power Utilities and Regulation
+12
+Securities Investor Grievance Routing Service
+Capital Markets and Investor Protection
+13
+Environmental Clearance Pre-Screening Service
+Environment and Infrastructure Development
+14
+Pharmacovigilance Adverse Event Intake and Triage Service
+Pharmaceuticals and Drug Safety
+15
+Academic Regulation and Student Petition Triage Service
+Higher Education Administration
+Retrieval difficulty by project
+#
+Obstacle to single-pass retrieval
+01
+A restriction on use located away from the cover it limits
+02
+A liability table that cannot be applied without definitions held elsewhere
+03
+Waiting periods listed away from the cover clause they restrict
+04
+A condition that removes an entitlement, next to the amounts it governs
+05
+A road-width limit stated separately from the setback tables
+06
+Two authoritative documents that contradict one another
+07
+A heading that names the article, in a different chapter from its material
+08
+Documentation organised by cause, alerts arriving as symptoms
+09
+A repealed Act held alongside the Code that replaced it
+
+ML System Design & AgentOps (UE24AM342AA5)
+Mini Project Statements
+Dept of CSE (AI & ML), PESU
+2
+#
+Obstacle to single-pass retrieval
+10
+A claim condition in a different regulation from the labelling rules
+11
+A mixed-use rule stated away from the category definitions
+12
+Investment vocabulary pointing to the wrong regulator
+13
+A General Condition after the table that changes rows within it
+14
+Everyday descriptions of reactions the insert lists in medical terms
+15
+A condonation provision stated away from the rule it softens
