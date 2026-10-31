@@ -1,0 +1,286 @@
+{
+  "prompt_version": "v2",
+  "summary": {
+    "groundedness": 1.0,
+    "context_relevance": 1.0,
+    "faithfulness": 1.0,
+    "hallucination_rate": 0.0,
+    "total_evaluated": 21,
+    "correct_routing_accuracy": 1.0
+  },
+  "scenarios": [
+    {
+      "id": "SCENARIO-01",
+      "description": "Section 4.1 Difficult Case: Bank FD interest shortfall filed to SEBI",
+      "expected_routing": "refer_to_other_regulator",
+      "actual_routing": "refer_to_other_regulator",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-02",
+      "description": "Mutual Fund unpaid redemption proceeds exceeding regulatory timeline",
+      "expected_routing": "assign_to_entity",
+      "actual_routing": "assign_to_entity",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-03",
+      "description": "Cross-regulator split: bank failed UPI payment coupled with broker unauthorized equity purchase",
+      "expected_routing": "escalate_to_human",
+      "actual_routing": "escalate_to_human",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-04",
+      "description": "Out-of-corpus asset: Cryptocurrency trading platform fraud",
+      "expected_routing": "escalate_to_human",
+      "actual_routing": "escalate_to_human",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-05",
+      "description": "Out-of-corpus asset: Real estate plot scheme",
+      "expected_routing": "escalate_to_human",
+      "actual_routing": "escalate_to_human",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-06",
+      "description": "Bank term deposit premature withdrawal penalty dispute",
+      "expected_routing": "refer_to_other_regulator",
+      "actual_routing": "refer_to_other_regulator",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-07",
+      "description": "Mutual fund dividend warrant delay",
+      "expected_routing": "assign_to_entity",
+      "actual_routing": "assign_to_entity",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-08",
+      "description": "Bank recurring deposit interest shortfall",
+      "expected_routing": "refer_to_other_regulator",
+      "actual_routing": "refer_to_other_regulator",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-09",
+      "description": "Unregulated chit fund failure",
+      "expected_routing": "escalate_to_human",
+      "actual_routing": "escalate_to_human",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-10",
+      "description": "Mutual fund switch order non-execution",
+      "expected_routing": "assign_to_entity",
+      "actual_routing": "assign_to_entity",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-11",
+      "description": "Senior citizen bank fixed deposit promised interest difference",
+      "expected_routing": "refer_to_other_regulator",
+      "actual_routing": "refer_to_other_regulator",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-12",
+      "description": "Mutual fund systematic withdrawal plan delay",
+      "expected_routing": "assign_to_entity",
+      "actual_routing": "assign_to_entity",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-13",
+      "description": "Banking savings account interest rate dispute",
+      "expected_routing": "refer_to_other_regulator",
+      "actual_routing": "refer_to_other_regulator",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-14",
+      "description": "Foreign exchange / Forex app unauthorized deposit loss",
+      "expected_routing": "escalate_to_human",
+      "actual_routing": "escalate_to_human",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-15",
+      "description": "Mutual fund liquid fund redemption delay",
+      "expected_routing": "assign_to_entity",
+      "actual_routing": "assign_to_entity",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-16",
+      "description": "Bank corporate fixed deposit non-credit of agreed quarterly interest",
+      "expected_routing": "refer_to_other_regulator",
+      "actual_routing": "refer_to_other_regulator",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-17",
+      "description": "Split issue: bank payment gateway freeze and stock broker demat charges",
+      "expected_routing": "escalate_to_human",
+      "actual_routing": "escalate_to_human",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-18",
+      "description": "Mutual fund ELSS tax saver redemption completion failure",
+      "expected_routing": "assign_to_entity",
+      "actual_routing": "assign_to_entity",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-19",
+      "description": "Tax saving bank FD interest payout calculation discrepancy",
+      "expected_routing": "refer_to_other_regulator",
+      "actual_routing": "refer_to_other_regulator",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-20",
+      "description": "Mutual fund index fund redemption payout delay",
+      "expected_routing": "assign_to_entity",
+      "actual_routing": "assign_to_entity",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    },
+    {
+      "id": "SCENARIO-21",
+      "description": "Unregistered algorithmic trading software subscription scam",
+      "expected_routing": "escalate_to_human",
+      "actual_routing": "escalate_to_human",
+      "metrics": {
+        "groundedness": 1.0,
+        "context_relevance": 1.0,
+        "faithfulness": 1.0,
+        "hallucination_rate": 0.0,
+        "correct": 1.0
+      }
+    }
+  ]
+}

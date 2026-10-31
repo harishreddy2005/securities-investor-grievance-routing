@@ -1,0 +1,521 @@
+[
+  {
+    "id": "SCENARIO-01",
+    "description": "Section 4.1 Difficult Case: Bank FD interest shortfall filed to SEBI",
+    "input": {
+      "complainant": {
+        "name": "Arun Kumar",
+        "email": "arun@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I invested in a fixed deposit through my bank's app. The interest credited is lower than what I was promised. I want to complain to SEBI.",
+      "named_regulator": "SEBI",
+      "entity_name": "Axis Bank Ltd",
+      "entity_type_claimed": "bank",
+      "channel": "web",
+      "incident_date": "2026-09-01",
+      "approached_entity_first": false
+    },
+    "expected_routing": "refer_to_other_regulator",
+    "expected_target_authority": "Reserve Bank of India \u2014 Integrated Ombudsman Scheme, 2021",
+    "expected_citations": [
+      "SEBI-SCORES-2023 \u00a75.3",
+      "RBI-IOS-2021 cl.3(1)(j)",
+      "RBI-IOS-2021 cl.9"
+    ],
+    "requires_bank_first_advice": true
+  },
+  {
+    "id": "SCENARIO-02",
+    "description": "Mutual Fund unpaid redemption proceeds exceeding regulatory timeline",
+    "input": {
+      "complainant": {
+        "name": "Priya Sharma",
+        "email": "priya@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I submitted a mutual fund redemption request over three weeks ago. The AMC has not dispatched my redemption proceeds.",
+      "named_regulator": "SEBI",
+      "entity_name": "HDFC Asset Management Company",
+      "entity_type_claimed": "amc",
+      "channel": "web",
+      "incident_date": "2026-09-10",
+      "approached_entity_first": true,
+      "entity_complaint_date": "2026-09-15"
+    },
+    "expected_routing": "assign_to_entity",
+    "expected_target_authority": "Asset Management Company (AMC) grievance officer",
+    "expected_citations": [
+      "SEBI-MF-1996 \u00a753",
+      "SEBI-MF-1996 \u00a760A",
+      "SEBI-SCORES-2023 \u00a71.2"
+    ],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-03",
+    "description": "Cross-regulator split: bank failed UPI payment coupled with broker unauthorized equity purchase",
+    "input": {
+      "complainant": {
+        "name": "Rohan Gupta",
+        "email": "rohan@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "My bank debited money via UPI that failed to reach the broker, and the stock broker also executed an unauthorized trade on my demat account.",
+      "named_regulator": "SEBI",
+      "entity_name": "Zerodha & ICICI Bank",
+      "entity_type_claimed": "broker",
+      "channel": "web",
+      "incident_date": "2026-09-12",
+      "approached_entity_first": false
+    },
+    "expected_routing": "escalate_to_human",
+    "expected_target_authority": "Human grievance officer",
+    "expected_citations": [],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-04",
+    "description": "Out-of-corpus asset: Cryptocurrency trading platform fraud",
+    "input": {
+      "complainant": {
+        "name": "Devendra Rao",
+        "email": "dev@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I deposited 100,000 INR to purchase crypto tokens (bitcoin and ethereum) on an app and they have frozen my withdrawals.",
+      "named_regulator": "SEBI",
+      "entity_name": "CoinCrypto Exchange",
+      "entity_type_claimed": "unknown",
+      "channel": "web",
+      "incident_date": "2026-08-20",
+      "approached_entity_first": false
+    },
+    "expected_routing": "escalate_to_human",
+    "expected_target_authority": "Human grievance officer",
+    "expected_citations": [],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-05",
+    "description": "Out-of-corpus asset: Real estate plot scheme",
+    "input": {
+      "complainant": {
+        "name": "Sneha Patil",
+        "email": "sneha@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I invested in an agricultural real estate plot scheme promising guaranteed returns. The company disappeared.",
+      "named_regulator": "SEBI",
+      "entity_name": "Green Acres Agro",
+      "entity_type_claimed": "unknown",
+      "channel": "web",
+      "incident_date": "2026-07-15",
+      "approached_entity_first": false
+    },
+    "expected_routing": "escalate_to_human",
+    "expected_target_authority": "Human grievance officer",
+    "expected_citations": [],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-06",
+    "description": "Bank term deposit premature withdrawal penalty dispute",
+    "input": {
+      "complainant": {
+        "name": "Vikram Singh",
+        "email": "vikram@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I broke my bank term deposit early and the bank deducted a penalty higher than contracted, leading to lower interest credited.",
+      "named_regulator": "SEBI",
+      "entity_name": "State Bank of India",
+      "entity_type_claimed": "bank",
+      "channel": "web",
+      "incident_date": "2026-09-05",
+      "approached_entity_first": false
+    },
+    "expected_routing": "refer_to_other_regulator",
+    "expected_target_authority": "Reserve Bank of India \u2014 Integrated Ombudsman Scheme, 2021",
+    "expected_citations": [
+      "SEBI-SCORES-2023 \u00a75.3",
+      "RBI-IOS-2021 cl.3(1)(j)",
+      "RBI-IOS-2021 cl.9"
+    ],
+    "requires_bank_first_advice": true
+  },
+  {
+    "id": "SCENARIO-07",
+    "description": "Mutual fund dividend warrant delay",
+    "input": {
+      "complainant": {
+        "name": "Anita Roy",
+        "email": "anita@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "My mutual fund declared dividend over a month ago but the AMC has not transferred or dispatched the redemption or dividend proceeds.",
+      "named_regulator": "SEBI",
+      "entity_name": "SBI Mutual Fund",
+      "entity_type_claimed": "amc",
+      "channel": "web",
+      "incident_date": "2026-09-02",
+      "approached_entity_first": true,
+      "entity_complaint_date": "2026-09-10"
+    },
+    "expected_routing": "assign_to_entity",
+    "expected_target_authority": "Asset Management Company (AMC) grievance officer",
+    "expected_citations": [
+      "SEBI-MF-1996 \u00a753",
+      "SEBI-MF-1996 \u00a760A"
+    ],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-08",
+    "description": "Bank recurring deposit interest shortfall",
+    "input": {
+      "complainant": {
+        "name": "Kavita Reddy",
+        "email": "kavita@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I opened a recurring deposit with my bank. Upon maturity, the interest credited was significantly lower than the contracted rate.",
+      "named_regulator": "SEBI",
+      "entity_name": "Kotak Mahindra Bank",
+      "entity_type_claimed": "bank",
+      "channel": "web",
+      "incident_date": "2026-09-14",
+      "approached_entity_first": false
+    },
+    "expected_routing": "refer_to_other_regulator",
+    "expected_target_authority": "Reserve Bank of India \u2014 Integrated Ombudsman Scheme, 2021",
+    "expected_citations": [
+      "SEBI-SCORES-2023 \u00a75.3",
+      "RBI-IOS-2021 cl.3(1)(j)",
+      "RBI-IOS-2021 cl.9"
+    ],
+    "requires_bank_first_advice": true
+  },
+  {
+    "id": "SCENARIO-09",
+    "description": "Unregulated chit fund failure",
+    "input": {
+      "complainant": {
+        "name": "Suresh Nair",
+        "email": "suresh@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I contributed monthly installments to a local chit fund scheme and the organizer absconded without paying the auction amount.",
+      "named_regulator": "SEBI",
+      "entity_name": "Kerala Chits Group",
+      "entity_type_claimed": "unknown",
+      "channel": "web",
+      "incident_date": "2026-08-10",
+      "approached_entity_first": false
+    },
+    "expected_routing": "escalate_to_human",
+    "expected_target_authority": "Human grievance officer",
+    "expected_citations": [],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-10",
+    "description": "Mutual fund switch order non-execution",
+    "input": {
+      "complainant": {
+        "name": "Deepak Mehta",
+        "email": "deepak@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I instructed a mutual fund redemption and switch to another equity scheme. The AMC delayed processing the redemption proceeds.",
+      "named_regulator": "SEBI",
+      "entity_name": "Nippon India Mutual Fund",
+      "entity_type_claimed": "amc",
+      "channel": "web",
+      "incident_date": "2026-09-18",
+      "approached_entity_first": true,
+      "entity_complaint_date": "2026-09-20"
+    },
+    "expected_routing": "assign_to_entity",
+    "expected_target_authority": "Asset Management Company (AMC) grievance officer",
+    "expected_citations": [
+      "SEBI-MF-1996 \u00a753",
+      "SEBI-MF-1996 \u00a760A"
+    ],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-11",
+    "description": "Senior citizen bank fixed deposit promised interest difference",
+    "input": {
+      "complainant": {
+        "name": "Govind Narang",
+        "email": "govind@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I am a senior citizen and invested in a fixed deposit under senior citizen scheme. The bank credited normal rate, resulting in lower interest than promised.",
+      "named_regulator": "SEBI",
+      "entity_name": "Punjab National Bank",
+      "entity_type_claimed": "bank",
+      "channel": "web",
+      "incident_date": "2026-08-30",
+      "approached_entity_first": false
+    },
+    "expected_routing": "refer_to_other_regulator",
+    "expected_target_authority": "Reserve Bank of India \u2014 Integrated Ombudsman Scheme, 2021",
+    "expected_citations": [
+      "SEBI-SCORES-2023 \u00a75.3",
+      "RBI-IOS-2021 cl.3(1)(j)",
+      "RBI-IOS-2021 cl.9"
+    ],
+    "requires_bank_first_advice": true
+  },
+  {
+    "id": "SCENARIO-12",
+    "description": "Mutual fund systematic withdrawal plan delay",
+    "input": {
+      "complainant": {
+        "name": "Meera Joshi",
+        "email": "meera@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "My mutual fund systematic withdrawal plan failed to remit the scheduled monthly redemption proceeds to my bank account.",
+      "named_regulator": "SEBI",
+      "entity_name": "UTI Mutual Fund",
+      "entity_type_claimed": "amc",
+      "channel": "web",
+      "incident_date": "2026-09-08",
+      "approached_entity_first": true,
+      "entity_complaint_date": "2026-09-12"
+    },
+    "expected_routing": "assign_to_entity",
+    "expected_target_authority": "Asset Management Company (AMC) grievance officer",
+    "expected_citations": [
+      "SEBI-MF-1996 \u00a753",
+      "SEBI-MF-1996 \u00a760A"
+    ],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-13",
+    "description": "Banking savings account interest rate dispute",
+    "input": {
+      "complainant": {
+        "name": "Ajay Verma",
+        "email": "ajay@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "My bank credited lower interest on my term deposit account than agreed when opening the account in their app.",
+      "named_regulator": "SEBI",
+      "entity_name": "Bank of Baroda",
+      "entity_type_claimed": "bank",
+      "channel": "web",
+      "incident_date": "2026-09-07",
+      "approached_entity_first": false
+    },
+    "expected_routing": "refer_to_other_regulator",
+    "expected_target_authority": "Reserve Bank of India \u2014 Integrated Ombudsman Scheme, 2021",
+    "expected_citations": [
+      "SEBI-SCORES-2023 \u00a75.3",
+      "RBI-IOS-2021 cl.3(1)(j)",
+      "RBI-IOS-2021 cl.9"
+    ],
+    "requires_bank_first_advice": true
+  },
+  {
+    "id": "SCENARIO-14",
+    "description": "Foreign exchange / Forex app unauthorized deposit loss",
+    "input": {
+      "complainant": {
+        "name": "Tariq Ali",
+        "email": "tariq@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I traded on an unauthorized forex betting platform and lost money. I want SEBI to recover my funds.",
+      "named_regulator": "SEBI",
+      "entity_name": "OctaTrade International",
+      "entity_type_claimed": "unknown",
+      "channel": "web",
+      "incident_date": "2026-09-11",
+      "approached_entity_first": false
+    },
+    "expected_routing": "escalate_to_human",
+    "expected_target_authority": "Human grievance officer",
+    "expected_citations": [],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-15",
+    "description": "Mutual fund liquid fund redemption delay",
+    "input": {
+      "complainant": {
+        "name": "Lata Krishnan",
+        "email": "lata@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I submitted a liquid mutual fund redemption. The AMC has not disbursed the redemption proceeds within the prescribed period.",
+      "named_regulator": "SEBI",
+      "entity_name": "Mirae Asset Mutual Fund",
+      "entity_type_claimed": "amc",
+      "channel": "web",
+      "incident_date": "2026-09-19",
+      "approached_entity_first": true,
+      "entity_complaint_date": "2026-09-21"
+    },
+    "expected_routing": "assign_to_entity",
+    "expected_target_authority": "Asset Management Company (AMC) grievance officer",
+    "expected_citations": [
+      "SEBI-MF-1996 \u00a753",
+      "SEBI-MF-1996 \u00a760A"
+    ],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-16",
+    "description": "Bank corporate fixed deposit non-credit of agreed quarterly interest",
+    "input": {
+      "complainant": {
+        "name": "Brijesh Mishra",
+        "email": "brijesh@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I placed a term deposit with the bank. The quarterly interest credited is lower than promised in the deposit advice.",
+      "named_regulator": "SEBI",
+      "entity_name": "Canara Bank",
+      "entity_type_claimed": "bank",
+      "channel": "web",
+      "incident_date": "2026-09-13",
+      "approached_entity_first": false
+    },
+    "expected_routing": "refer_to_other_regulator",
+    "expected_target_authority": "Reserve Bank of India \u2014 Integrated Ombudsman Scheme, 2021",
+    "expected_citations": [
+      "SEBI-SCORES-2023 \u00a75.3",
+      "RBI-IOS-2021 cl.3(1)(j)",
+      "RBI-IOS-2021 cl.9"
+    ],
+    "requires_bank_first_advice": true
+  },
+  {
+    "id": "SCENARIO-17",
+    "description": "Split issue: bank payment gateway freeze and stock broker demat charges",
+    "input": {
+      "complainant": {
+        "name": "Manish Chadha",
+        "email": "manish@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "My bank blocked my netbanking transfer and simultaneously my stock broker levied illegal trade charges.",
+      "named_regulator": "SEBI",
+      "entity_name": "HDFC Bank & Groww",
+      "entity_type_claimed": "broker",
+      "channel": "web",
+      "incident_date": "2026-09-22",
+      "approached_entity_first": false
+    },
+    "expected_routing": "escalate_to_human",
+    "expected_target_authority": "Human grievance officer",
+    "expected_citations": [],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-18",
+    "description": "Mutual fund ELSS tax saver redemption completion failure",
+    "input": {
+      "complainant": {
+        "name": "Shalini Dixit",
+        "email": "shalini@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "My ELSS mutual fund completed its 3-year lock-in period. I requested redemption proceeds which the AMC has failed to dispatch.",
+      "named_regulator": "SEBI",
+      "entity_name": "Tata Mutual Fund",
+      "entity_type_claimed": "amc",
+      "channel": "web",
+      "incident_date": "2026-09-16",
+      "approached_entity_first": true,
+      "entity_complaint_date": "2026-09-18"
+    },
+    "expected_routing": "assign_to_entity",
+    "expected_target_authority": "Asset Management Company (AMC) grievance officer",
+    "expected_citations": [
+      "SEBI-MF-1996 \u00a753",
+      "SEBI-MF-1996 \u00a760A"
+    ],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-19",
+    "description": "Tax saving bank FD interest payout calculation discrepancy",
+    "input": {
+      "complainant": {
+        "name": "Girish Bhat",
+        "email": "girish@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I booked a 5-year tax saver fixed deposit through my bank app. The annual interest credited is less than promised.",
+      "named_regulator": "SEBI",
+      "entity_name": "Yes Bank Ltd",
+      "entity_type_claimed": "bank",
+      "channel": "web",
+      "incident_date": "2026-08-25",
+      "approached_entity_first": false
+    },
+    "expected_routing": "refer_to_other_regulator",
+    "expected_target_authority": "Reserve Bank of India \u2014 Integrated Ombudsman Scheme, 2021",
+    "expected_citations": [
+      "SEBI-SCORES-2023 \u00a75.3",
+      "RBI-IOS-2021 cl.3(1)(j)",
+      "RBI-IOS-2021 cl.9"
+    ],
+    "requires_bank_first_advice": true
+  },
+  {
+    "id": "SCENARIO-20",
+    "description": "Mutual fund index fund redemption payout delay",
+    "input": {
+      "complainant": {
+        "name": "Kishore Jain",
+        "email": "kishore@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "My mutual fund index units were redeemed but the AMC has not credited the redemption proceeds.",
+      "named_regulator": "SEBI",
+      "entity_name": "Bandhan Mutual Fund",
+      "entity_type_claimed": "amc",
+      "channel": "web",
+      "incident_date": "2026-09-24",
+      "approached_entity_first": true,
+      "entity_complaint_date": "2026-09-26"
+    },
+    "expected_routing": "assign_to_entity",
+    "expected_target_authority": "Asset Management Company (AMC) grievance officer",
+    "expected_citations": [
+      "SEBI-MF-1996 \u00a753",
+      "SEBI-MF-1996 \u00a760A"
+    ],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-21",
+    "description": "Unregistered algorithmic trading software subscription scam",
+    "input": {
+      "complainant": {
+        "name": "Varun Sethi",
+        "email": "varun@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "I bought a subscription for an unverified algorithmic trading bot telegram channel that promised 20 percent daily return.",
+      "named_regulator": "SEBI",
+      "entity_name": "AlphaBot Algo Services",
+      "entity_type_claimed": "unknown",
+      "channel": "web",
+      "incident_date": "2026-09-17",
+      "approached_entity_first": false
+    },
+    "expected_routing": "escalate_to_human",
+    "expected_target_authority": "Human grievance officer",
+    "expected_citations": [],
+    "requires_bank_first_advice": false
+  }
+]

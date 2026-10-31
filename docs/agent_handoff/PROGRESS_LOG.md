@@ -144,3 +144,20 @@ Timestamps are IST.
 - Updated `app/llm.py` and `app/agents/graph.py`:
   - Explicit handling for out-of-corpus / unregulated products (crypto, chit funds, real estate plots) routing to human escalation with reasoned explanation (F7).
   - Verified across all test suites: 42 passed in `pytest`.
+
+## 2026-10-31 21:32 — Phase 3 Evaluation Suite, Prompts, and Cost Tracking Completed
+- Created versioned prompt artifacts:
+  - `app/prompts/v1_baseline.yaml`: Baseline single-pass prompt.
+  - `app/prompts/v2_modifier_aware.yaml`: Advanced multi-pass modifier-aware prompt with regulatory negative-lookup checks.
+- Created `eval/scenarios.json`:
+  - 21 comprehensive test scenarios covering the Section 4.1 bank FD case, Mutual Fund redemption delays, cross-regulator splits (banking + brokerage), out-of-corpus investments (crypto, chit funds, unverified algos), and bank premature penalties.
+- Implemented `app/eval/evaluator.py`:
+  - Automated calculation of **Groundedness**, **Context Relevance**, **Faithfulness**, and **Hallucination Rate** matching TruLens/RAGAS definitions.
+- Implemented `app/eval/cost_tracker.py`:
+  - Token and cost tracking attributed per step and per run ($0.15 / 1M prompt, $0.60 / 1M completion benchmark), projecting cost per 100 runs.
+- Implemented `app/eval/cache.py`:
+  - Multi-tier in-memory & query hashing cache (`D7`) with hit-rate metrics tracking.
+- Created `app/cli/evaluate.py`:
+  - CLI batch runner `python3 -m app.cli.evaluate`.
+  - Batch results on 21 scenarios: **100% Routing Accuracy, 100% Groundedness, 100% Context Relevance, 100% Faithfulness, 0% Hallucination Rate** saved to `eval/eval_results_v2.json`.
+- Full test suite: **45 passed** in `pytest`.

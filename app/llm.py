@@ -21,19 +21,24 @@ def stub_response(task: str, payload: dict) -> dict:
     if task == "investigate":
         text = payload["complaint_text"].lower()
         bank = bool(re.search(r"\bbank(?:ing|['’]s)?\b", text))
-        fd = "fixed deposit" in text or "term deposit" in text
+        fd = any(word in text for word in ("fixed deposit", "term deposit", "recurring deposit"))
         securities = any(word in text for word in ("broker", "mutual fund", "trade", "demat", "shares"))
         # Unregulated or out-of-corpus products (F7)
-        unregulated = any(word in text for word in ("crypto", "bitcoin", "ethereum", "chit fund", "real estate plot"))
+        unregulated = any(word in text for word in ("crypto", "bitcoin", "ethereum", "chit fund", "real estate plot", "forex betting", "algorithmic trading bot"))
         if unregulated:
             return dict(kind="unregulated", product="unregulated financial product", entity_type="outside corpus")
-        if bank and securities:
+        # Check if bank is simply the destination of proceeds rather than the respondent
+        is_bank_destination = "to my bank" in text or "into my bank" in text or "in my bank account" in text
+        if bank and securities and not is_bank_destination:
             return dict(kind="mixed", product="multiple or ambiguous products", entity_type="multiple or uncertain")
-        shortfall = any(word in text for word in ("lower", "less", "shortfall", "underpaid"))
+        shortfall = any(word in text for word in ("lower", "less", "shortfall", "underpaid", "difference"))
         promised = any(word in text for word in ("promised", "agreed", "contracted"))
-        if bank and fd and "interest" in text and shortfall and promised:
-            return dict(kind="bank_fd", product="bank fixed deposit", entity_type="bank")
-        if "mutual fund" in text and "redemption" in text and not bank:
+        # A dispute seeking a higher commercial interest rate without prior contractual promise is commercial judgment
+        commercial_decision = "want a higher" in text or "new rate is lower" in text
+        if bank and fd and "interest" in text and (shortfall or promised) and not commercial_decision:
+            return dict(kind="bank_fd", product="bank fixed/term/recurring deposit", entity_type="bank")
+        mf_redemption = any(word in text for word in ("redemption", "repurchase", "proceeds", "systematic withdrawal"))
+        if "mutual fund" in text and mf_redemption:
             return dict(kind="mutual_fund", product="mutual fund redemption", entity_type="amc")
         return dict(kind="unknown", product="not established", entity_type="not established")
     if task == "verify":
