@@ -1,4 +1,4 @@
-﻿import json
+import json
 import logging
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -11,6 +11,7 @@ from rq.exceptions import NoSuchJobError
 from rq.job import Job
 
 from app.config import get_settings
+from app.guardrails.safety import inspect_input_text
 from app.jobs import connection, process_grievance, queue, worker_available
 from app.schemas import GrievanceSubmission, JobAccepted, JobStatus, RoutingDecision
 
@@ -55,6 +56,17 @@ async def invalid_request(request: Request, exc: RequestValidationError):
 @app.post("/api/v1/grievances", status_code=202, response_model=JobAccepted)
 @app.post("/api/v1/grievances/route", status_code=202, response_model=JobAccepted, deprecated=True)
 def submit(submission: GrievanceSubmission, conn=Depends(redis_connection)):
+    # L4 Guardrail check on free-text complaint field
+    is_safe, guardrail_msg = inspect_input_text(submission.complaint_text)
+    if not is_safe:
+        err = [{"loc": ["body", "complaint_text"], "type": "guardrail_violation", "msg": guardrail_msg}]
+        try:
+            conn.lpush("grievance:quarantine", json.dumps({"errors": err, "body": submission.model_dump(mode="json")}, default=str))
+            conn.ltrim("grievance:quarantine", 0, 999)
+        except RedisError:
+            pass
+        raise HTTPException(status_code=400, detail=guardrail_msg)
+
     run_id = str(uuid4())
     settings = get_settings()
     try:

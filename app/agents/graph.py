@@ -91,7 +91,12 @@ def build_graph(retriever, model):
         trace = list(state["trace"])
         trace.append(dict(agent="verifier", action="audit_handoff", detail="Check required evidence coverage and match every citation to persisted PDF text"))
         if hypothesis.kind not in REQUIRED:
-            reason = "Complaint spans regulators or has ambiguous product ownership." if hypothesis.kind == "mixed" else "The Phase 0 corpus and stub cannot establish this product and routing with sufficient evidence."
+            if hypothesis.kind == "mixed":
+                reason = "Complaint splits across regulators (e.g. banking channel and securities intermediary)."
+            elif hypothesis.kind == "unregulated":
+                reason = "Entity type or financial product falls outside regulatory corpus (unregulated or unlisted asset)."
+            else:
+                reason = "The regulatory corpus and model cannot establish this product and routing with sufficient evidence."
             return {"result": escalate(reason, trace, hypothesis.product, hypothesis.entity_type).model_dump(mode="json")}
         citations = [Citation.model_validate(c) for c in state["evidence"]]
         by_section = {(c.document_id, c.section): c for c in citations}

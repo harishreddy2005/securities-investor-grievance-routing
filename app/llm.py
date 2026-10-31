@@ -12,7 +12,7 @@ from app.schemas import StrictModel
 
 
 class Hypothesis(StrictModel):
-    kind: str = Field(pattern=r"^(bank_fd|mutual_fund|mixed|unknown)$")
+    kind: str = Field(pattern=r"^(bank_fd|mutual_fund|mixed|unregulated|unknown)$")
     product: str
     entity_type: str
 
@@ -22,7 +22,11 @@ def stub_response(task: str, payload: dict) -> dict:
         text = payload["complaint_text"].lower()
         bank = bool(re.search(r"\bbank(?:ing|['’]s)?\b", text))
         fd = "fixed deposit" in text or "term deposit" in text
-        securities = any(word in text for word in ("broker", "mutual fund", "trade", "demat"))
+        securities = any(word in text for word in ("broker", "mutual fund", "trade", "demat", "shares"))
+        # Unregulated or out-of-corpus products (F7)
+        unregulated = any(word in text for word in ("crypto", "bitcoin", "ethereum", "chit fund", "real estate plot"))
+        if unregulated:
+            return dict(kind="unregulated", product="unregulated financial product", entity_type="outside corpus")
         if bank and securities:
             return dict(kind="mixed", product="multiple or ambiguous products", entity_type="multiple or uncertain")
         shortfall = any(word in text for word in ("lower", "less", "shortfall", "underpaid"))

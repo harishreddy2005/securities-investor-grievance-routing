@@ -133,3 +133,14 @@ Timestamps are IST.
 - Hardened .gitignore for .env variants (retaining .env.example), local credentials/private keys, database files and sidecars, and generated index/model/runtime directories outside the existing ignored data/ tree. Updated current publication documentation.
 - Completion commit contains only .gitignore and checkpoint documentation updates; the full 45-file working implementation is retained in its parent commit 8669c30. Existing verification remains 38 Python tests, actual Edge form checks, and real Docker smoke/restart-persistence checks passed. No application code changed for this checkpoint.
 - Proceed with the user's requested exact-message commit, annotated tag and normal branch/tag pushes; report the resulting immutable commit and tag verification directly to the user. No Phase 1 work included.
+
+## 2026-10-31 20:48 — Phase 1 Guardrails and Out-of-Corpus Escalation Implemented
+- Implemented `app/guardrails/safety.py`:
+  - Input Prompt Injection defense (regex detection for instructions bypass, system prompt extraction, jailbreak patterns).
+  - Input Toxicity filter (toxic/abusive phrasing).
+  - Output Authority filter (disallow models making binding claims, financial payouts, or direct complaint disposal).
+- Updated `app/main.py` ingestion boundary:
+  - Free-text complaint field is evaluated before job queuing; failed inputs are quarantined in `grievance:quarantine` and return HTTP 400.
+- Updated `app/llm.py` and `app/agents/graph.py`:
+  - Explicit handling for out-of-corpus / unregulated products (crypto, chit funds, real estate plots) routing to human escalation with reasoned explanation (F7).
+  - Verified across all test suites: 42 passed in `pytest`.
