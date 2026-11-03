@@ -161,3 +161,29 @@ Timestamps are IST.
   - CLI batch runner `python3 -m app.cli.evaluate`.
   - Batch results on 21 scenarios: **100% Routing Accuracy, 100% Groundedness, 100% Context Relevance, 100% Faithfulness, 0% Hallucination Rate** saved to `eval/eval_results_v2.json`.
 - Full test suite: **45 passed** in `pytest`.
+
+## 2026-11-02 — Phase 2 implementation started on teammate baseline
+- User explicitly authorized Phase 2 reliability, fault tolerance and multi-container observability; no Phase 3/4 work and no commit/push.
+- Current main c248225 includes teammate Phase 1 (93e4c58) and Phase 3 (c248225). Reviewed README, TEAM_PLAN, handoff decisions/progress, active architecture and tests. The separate local Phase 1 backup branch is not merged. Untracked .vscode/ remains untouched.
+- Existing functionality: fixed 20s LLM HTTP timeout, Redis connection timeouts, RQ hard job timeout, persistent queue/results and heartbeat checks. Missing: retry/backoff policy, shared circuit breaker, retrieval deadline, idempotency contract, redacted structured telemetry, Prometheus/Grafana/Jaeger containers and cross-queue traces.
+- Preserve reviewed PDFs and regulatory routing; retain teammate guardrails, prompts and evaluation modules without expanding those phases. Baseline test and Docker checks underway.
+
+## 2026-11-03 — Phase 2 resumed locally
+- Resumed the existing uncommitted Phase 2 work on main c248225; retained teammate Phase 1/3 files and user-local .vscode without merging the separate Phase 1 backup.
+- Added idempotency-key submission, shared execution leases and a durable per-run outcome; context propagation across RQ; bounded worker Redis operations separate from RQ blocking dequeue; structured log redaction; API/stub metrics and Redis-aggregated worker metrics.
+- Added explicit pytest testpaths to exclude ignored audit/runtime directories after duplicate test names in data/audit-c248225 caused collection errors. No corpus/index/runtime data was deleted.
+- Full local suite passed 56 tests. After tightening worker Redis timeout pooling, targeted API/reliability suite passed 27 tests. Two upstream deprecation warnings remain.
+- Created Prometheus/Grafana/Jaeger Compose configuration, auto-provisioned dashboard, persistent monitoring volumes, random local Grafana credential setup, and monitoring/failure verification scripts. First monitoring image downloads are still in progress; no new monitoring service is claimed as running yet.
+
+## 2026-11-03 — Phase 2 local verification complete
+- Actual Compose build/start passed. Nine long-running services healthy (including cAdvisor), ingest exited 0; existing data volumes retained.
+- Final host Python 3.14 regression suite: 59 passed, two upstream warnings. Final Python 3.11 Docker suite: 59 passed, one upstream warning. Original four-scenario Docker smoke passed after recovery. Compileall, pip check and git diff --check passed.
+- Seven Prometheus targets UP. Grafana datasource/dashboard provisioned; all 26 panel expressions returned finite numeric data, including container resources and per-agent steps/tools/retries.
+- Verified real queued FD job 3589231d-4b5a-4e8d-b77a-e0267478f261 retains RBI bank-first advice. Trace 057c2661fe89032602ab2c4e8409f619 links grievance-api, grievance-worker and grievance-llm-stub with submission/retrieval/agents/verification/result storage spans. Checked logs/trace contain no private canary or complaint body; log IDs correlate.
+- Controlled fault test initially failed due to five-second fixture cooldown expiring during SpawnWorker imports. Increased fixture cooldown to 60 seconds; complete rerun passed OPEN fail-fast, failed/recovered HALF_OPEN probes, provider errors/timeouts, Redis 503, fresh recovery routing and Jaeger-outage independence. Normal settings restored after both attempts; no volume deletion.
+- Real Edge browser passed form/date regressions, rendered RBI result, Grafana chart rendering and Jaeger trace rendering. Safe artifacts/screenshots remain ignored in data/.
+- Updated README, runbook, data contract, team status, incident log and PHASE2_STATUS.md. CI steps updated but not executed on GitHub for local changes. No commit/push, no Phase 4 work; preexisting .vscode and teammate Phase 1/3 preserved.
+
+## 2026-11-03 — Phase 2 publication authorized
+- User requested committing/pushing the locally verified Phase 2 implementation. Fetched origin before publication: main and origin/main both at c248225 with no divergence.
+- Reviewed the 41 changed/new project files and secret patterns. Local .env, verification artifacts, screenshots, caches and runtime data remain ignored; .vscode is excluded from staging. No regulatory PDFs changed. The preceding 59-test host/container and real-Docker monitoring/failure results are the validation for this source change.

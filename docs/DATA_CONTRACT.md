@@ -1,4 +1,4 @@
-# Phase 0 data contract
+# Application data contract
 
 OpenAPI at `/docs` and `/openapi.json` is generated from `app/schemas.py`.
 Use synthetic complaints only. The service never submits complaints externally.
@@ -77,3 +77,33 @@ exceptions; public responses only show a safe error message and the run ID.
 and a worker heartbeat is recent. Otherwise it returns **503**. It is a readiness
 check; it does not guarantee a subsequent job succeeds. No authentication or
 production data privacy controls are included in Phase 0.
+
+## Phase 2 reliability additions
+
+Optional submission header `Idempotency-Key` (1-128 characters) identifies one
+submission for the configured result retention window. Repeating the same key
+and validated payload returns the original run_id with HTTP 202, including after
+completion. A different payload with the same key returns 409. Keys and payload
+hashes are stored in Redis atomically with enqueueing; raw keys are not metric
+labels or log attributes. A new key is needed to request new work after an
+escalation/failure. Worker execution locking and an immutable per-run stored
+outcome prevent duplicate delivery from publishing a second outcome. This is
+bounded idempotency, not a guarantee of globally exactly-once execution under
+arbitrary Redis data loss or side effects.
+
+`X-Correlation-ID` accepts a UUID; otherwise the server generates one. Responses
+include it and `X-Trace-ID` when tracing is enabled. W3C traceparent propagates
+through the Redis job metadata; arbitrary baggage/tracestate are discarded.
+
+Results add `reliability_status` (`verified` or `degraded`) and nullable
+`error_code` (`timeout`, `unavailable`, `circuit_open`, `invalid_response`, or
+`internal_error`). Exhausted dependency attempts and circuit rejection complete
+the job with `routing=escalate_to_human`, `uncertain=true`, degraded reliability,
+and no regulatory citations. A verified reliability status means dependencies
+completed; normal evidence-based uncertain routing remains possible. Unexpected
+programming failures retain the failed-job contract. Redis unavailability at
+submission or polling returns controlled 503 rather than a model result.
+
+`GET /metrics` exposes stable API route/status/method aggregates. Worker aggregate
+metrics are internal at `worker-metrics:9101/metrics`. Complaint fields, job IDs,
+trace IDs and arbitrary URLs are never metric labels.

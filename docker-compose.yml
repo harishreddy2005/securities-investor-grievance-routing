@@ -1,11 +1,98 @@
 x-app: &app
   build: .
   env_file: .env
+  environment:
+    TELEMETRY_ENABLED: ${TELEMETRY_ENABLED:-true}
+    OTLP_ENDPOINT: ${OTLP_ENDPOINT:-http://jaeger:4318/v1/traces}
   volumes:
     - index-data:/data/index
     - model-cache:/home/router/.cache
 
 services:
+  cadvisor:
+    image: ghcr.io/google/cadvisor:0.55.1
+    command: [--docker_only=true, --housekeeping_interval=5s, --store_container_labels=false]
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://localhost:8080/healthz']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+
+  jaeger:
+    build:
+      context: .
+      dockerfile: deploy/jaeger/Dockerfile
+    command: [--config, /etc/jaeger/jaeger.yml]
+    volumes:
+      - ./deploy/jaeger/jaeger.yml:/etc/jaeger/jaeger.yml:ro
+      - jaeger-data:/data
+    ports:
+      - '127.0.0.1:16686:16686'
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://localhost:13133/status']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    command: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.retention.time=7d]
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - '127.0.0.1:9090:9090'
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://localhost:9090/-/ready']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.0.2
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?Run python scripts/configure_local.py first}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Run python scripts/configure_local.py first}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_METRICS_ENABLED: 'true'
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://localhost:3000/api/health']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+
+  worker-metrics:
+    <<: *app
+    command: [python, -m, app.metrics_server]
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:9101/metrics', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+
   redis:
     image: redis:7.4.2-alpine
     command: [redis-server, --appendonly, 'yes', --appendfsync, everysec]
@@ -74,3 +161,6 @@ volumes:
   index-data:
   model-cache:
   redis-data:
+  prometheus-data:
+  grafana-data:
+  jaeger-data:

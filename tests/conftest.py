@@ -7,6 +7,15 @@ from app.rag.ingest import ingest
 from app.rag.retriever import Retriever
 
 
+@pytest.fixture(scope="session", autouse=True)
+def disable_external_telemetry_for_unit_tests():
+    # Real export is exercised by the Docker monitoring smoke, not unit tests.
+    patch=pytest.MonkeyPatch()
+    patch.setenv("TELEMETRY_ENABLED","false")
+    yield
+    patch.undo()
+
+
 @pytest.fixture(scope="session")
 def settings(tmp_path_factory):
     return Settings(_env_file=None, index_dir=tmp_path_factory.mktemp("index"),

@@ -1,5 +1,22 @@
 # Development incidents
 
+## 2026-11-03 — Phase 2 test discovery and circuit timing
+
+Pytest initially discovered a historical checkout in ignored `data/audit-c248225`
+and reported duplicate module names. Added `pytest.ini` with `testpaths=tests`
+and excluded runtime/audit directories; retained the audit and existing data.
+The corrected complete local regression suite passes.
+
+The first real Docker circuit demonstration used a five-second cooldown. RQ
+SpawnWorker needed long enough to import its semantic runtime that the next job
+correctly reached HALF_OPEN instead of observing OPEN, failing the test's
+`circuit_open` assertion. Increased only the failure fixture's cooldown to 60
+seconds. The repeated test passed provider exhaustion, fail-fast OPEN, failed
+HALF_OPEN reopening, recovered HALF_OPEN closing, timeout escalation, Redis 503,
+fresh post-recovery RBI bank-first routing, and Jaeger-outage independence.
+The script restored normal configuration after both attempts, without deleting
+volumes. This was a timing assumption in the fixture, not a bypass of the circuit.
+
 ## 2026-10-30 — Local Docker engine unavailable
 
 `docker --version` returned 29.8.2. `docker info` failed because the Windows

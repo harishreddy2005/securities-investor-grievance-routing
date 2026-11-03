@@ -6,6 +6,7 @@ from langgraph.graph import END, START, StateGraph
 from app.agents.tools import make_tools
 from app.llm import Hypothesis, Model
 from app.schemas import Citation, GrievanceSubmission, RoutingDecision
+from app.observability.runtime import instrument_agent
 
 REQUIRED = {
     "bank_fd": [("SEBI-SCORES-2023", "5.3"), ("RBI-IOS-2021", "3(1)(j)"),
@@ -128,8 +129,8 @@ def build_graph(retriever, model):
         return {"result": decision.model_dump(mode="json")}
 
     graph = StateGraph(AgentState)
-    graph.add_node("investigator", investigator)
-    graph.add_node("verifier", verifier)
+    graph.add_node("investigator", instrument_agent(investigator,"investigator"))
+    graph.add_node("verifier", instrument_agent(verifier,"verifier"))
     graph.add_edge(START, "investigator")
     graph.add_edge("investigator", "verifier")
     graph.add_edge("verifier", END)

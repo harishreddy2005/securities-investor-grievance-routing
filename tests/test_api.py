@@ -110,3 +110,52 @@ def test_redis_outage_returns_503(api, reference, monkeypatch):
     assert client.get("/health").status_code == 503
     monkeypatch.setattr(conn, "execute_command", lambda *a, **k: (_ for _ in ()).throw(ConnectionError("down")))
     assert client.post("/api/v1/grievances", json=reference).status_code == 503
+
+
+def test_idempotency_reuses_job_and_rejects_conflicting_payload(api, reference):
+    client,conn=api
+    headers={"Idempotency-Key":"repeatable-test-key"}
+    first=client.post("/api/v1/grievances",json=reference,headers=headers)
+    second=client.post("/api/v1/grievances",json=reference,headers=headers)
+    assert first.status_code==second.status_code==202
+    assert first.json()["run_id"]==second.json()["run_id"]
+    assert jobs.queue(conn).count==1
+    conflict=client.post("/api/v1/grievances",json={**reference,"entity_name":"Another bank"},headers=headers)
+    assert conflict.status_code==409 and jobs.queue(conn).count==1
+
+
+def test_dependency_failure_returns_safe_human_escalation(api,reference,monkeypatch):
+    from app.reliability import DependencyFailure
+    client,conn=api
+    def fail():
+        raise DependencyFailure("timeout","llm")
+    monkeypatch.setattr(jobs,"resources",fail)
+    job=client.post("/api/v1/grievances",json=reference).json()
+    drain(conn)
+    assert client.get(job["status_url"]).json()["status"]=="finished"
+    result=client.get(job["result_url"]).json()
+    assert result["routing"]=="escalate_to_human" and result["uncertain"]
+    assert result["reliability_status"]=="degraded" and result["error_code"]=="timeout"
+    assert result["regulatory_citations"]==[]
+
+
+def test_duplicate_delivery_returns_stored_outcome_without_rerunning(api,reference,monkeypatch):
+    client,conn=api
+    job=client.post("/api/v1/grievances",json=reference).json()
+    drain(conn)
+    stored=client.get(job["result_url"]).json()
+    monkeypatch.setattr(jobs,"connection",lambda:conn)
+    monkeypatch.setattr(jobs,"resources",lambda:pytest.fail("Duplicate execution called agents again"))
+    repeated=jobs.process_grievance(reference,job["run_id"])
+    assert repeated==stored
+    assert conn.hget("grievance:metrics:jobs","success")==b"1"
+
+
+def test_metrics_paths_use_route_template_not_identifier(api,reference):
+    client,_=api
+    job=client.post("/api/v1/grievances",json=reference).json()
+    client.get(job["status_url"])
+    metrics=client.get("/metrics")
+    assert metrics.status_code==200
+    assert 'route="/api/v1/grievances/{run_id}"' in metrics.text
+    assert job["run_id"] not in metrics.text

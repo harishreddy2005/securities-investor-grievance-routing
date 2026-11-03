@@ -92,3 +92,21 @@ smoke passed all four scenarios before and after restarting Redis, API and worke
 The original FD result survived the restart. Phase 0 is ready for the team's
 minimum-workflow demonstration; later-phase features remain pending. Containers
 are left running at http://localhost:8000. No commit or push has been performed.
+
+## Phase 2 locally verified (2026-11-03)
+
+This supersedes earlier pending-observability notes. Docker Desktop is available
+on this device. Phase 2 is implemented and verified locally: dependency deadlines,
+bounded retries, shared circuit breaker, safe escalation, idempotency and redacted
+telemetry. Nine long-running containers are healthy; ingest exited 0. Prometheus
+has seven UP targets; all 26 provisioned Grafana panels query real numeric data;
+Jaeger links submission through worker/agents to result storage. Real Edge browser
+checks passed for app, dashboard and trace UI. Host and Docker regression suites
+each passed 59 tests; all four Docker smoke scenarios and controlled dependency
+failure/recovery checks passed. See PHASE2_STATUS.md for evidence and limitations.
+
+Current setup: preserve existing `.env`, run `python scripts/configure_local.py`,
+then `docker compose up --build -d --wait --wait-timeout 900`. Grafana credentials
+come from local `.env`. Worker scaling remains configurable; Phase 4 load/scaling
+measurement has not started. Teammate Phase 1/3 code is preserved, not recertified
+in full by this update. Phase 2 changes remain uncommitted and unpushed.

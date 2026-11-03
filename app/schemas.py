@@ -86,6 +86,8 @@ class RoutingDecision(StrictModel):
     verification: str
     prompt_version: str = "phase0-v1"
     agent_trace: list[AgentEvent] = Field(default_factory=list)
+    reliability_status: Literal["verified", "degraded"] = "verified"
+    error_code: Literal["timeout", "unavailable", "invalid_response", "circuit_open", "internal_error"] | None = None
 
 
 class JobAccepted(StrictModel):

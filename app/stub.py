@@ -6,8 +6,17 @@ from fastapi import FastAPI, HTTPException
 
 from app.llm import stub_response
 from app.schemas import StrictModel
+from app.observability.http import install
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi.responses import Response
 
 app = FastAPI(title="Phase 0 deterministic model stub")
+install(app,"grievance-llm-stub")
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics():
+    return Response(generate_latest(),media_type=CONTENT_TYPE_LATEST)
 
 
 class Inference(StrictModel):

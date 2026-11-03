@@ -1,4 +1,4 @@
-name: Phase 0 tests
+name: Grievance routing tests
 on: [push, pull_request, workflow_dispatch]
 jobs:
   python:
@@ -19,12 +19,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env
+      - run: python scripts/configure_local.py
       - name: Start with real local semantic embeddings
         run: docker compose up --build -d --wait --wait-timeout 900
       - name: HTTP end-to-end smoke test
         run: docker compose exec -T api python scripts/smoke_test.py
       - name: Repeat ingestion is idempotent
         run: docker compose run --rm --no-deps ingest
+      - name: Monitoring end-to-end verification
+        run: python scripts/verify_phase2.py
+      - name: Controlled dependency failure and recovery
+        run: python scripts/failure_test_phase2.py
       - name: Show logs
         if: always()
         run: docker compose ps -a && docker compose logs --no-color --tail=200

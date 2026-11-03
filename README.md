@@ -1,6 +1,6 @@
 ﻿# Securities Investor Grievance Routing
 
-Phase 0 is a minimum working, evidence-grounded grievance routing application:
+An evidence-grounded grievance routing application with Phase 2 reliability and monitoring:
 PDF ingestion → persistent semantic index → Redis/RQ queue → two LangGraph agents
 → verified result → web interface. It recommends a route for a grievance officer
 to review; it never decides a complaint or contacts a regulator. Use synthetic data.
@@ -15,13 +15,16 @@ least 6 GB Docker memory. No API key is required.
 git clone https://github.com/harishreddy2005/securities-investor-grievance-routing.git
 cd securities-investor-grievance-routing
 cp .env.example .env
+python scripts/configure_local.py
 docker compose up --build -d --wait --wait-timeout 900
 docker compose ps -a
 docker compose exec -T api python scripts/smoke_test.py
 ```
 
 PowerShell: use `Copy-Item .env.example .env` instead of `cp` if preferred. Copy
-only on first setup, so existing configuration is retained. Phase 0 is published
+only on first setup, so existing configuration is retained. `configure_local.py`
+preserves existing settings and generates a random Grafana password in ignored
+`.env`; Python 3 is required for this one-time setup. Phase 0 is published
 on GitHub; the annotated `phase-0-complete` tag identifies its completion checkpoint.
 
 Open **http://localhost:8000** for the UI and **http://localhost:8000/docs** for
@@ -30,7 +33,8 @@ job and displays the authority, immediate action, reasoning, exact PDF passages,
 next steps and agent trace. Health/readiness is at `/health`.
 
 `ingest` runs automatically before workers start; **Exited (0) is its expected
-state**. `redis`, `llm-stub`, `worker`, and `api` should be running and healthy.
+state**. Nine long-running services should be healthy: `redis`, `llm-stub`,
+`worker`, `api`, `worker-metrics`, `prometheus`, `grafana`, `jaeger`, and `cadvisor`.
 First startup may take several minutes to download the embedding weights.
 Ingestion is idempotent, so the older manual teammate command is also safe:
 
@@ -73,6 +77,11 @@ escalate to a human.
 | `worker` | RQ job isolation and the two-agent LangGraph workflow |
 | `llm-stub` | Deterministic structured model tasks over HTTP, zero credentials |
 | `ingest` | One-shot PDF parsing, exact clause anchors, embedding and indexing |
+| `worker-metrics` | Redis-backed metrics aggregated across worker processes and replicas |
+| `prometheus` | Seven monitored scrape targets; persistent seven-day metrics |
+| `grafana` | Automatically provisioned datasource and 26-panel dashboard |
+| `jaeger` | OTLP HTTP trace collection, query UI and persistent trace storage |
+| `cadvisor` | Container CPU, memory and uptime; internal port 8080 |
 
 The investigator node calls tools to inspect validated fields, search regulations,
 and look up reviewed clauses. It performs an initial search, reads the SCORES
@@ -82,9 +91,10 @@ citations, and tool events. The independent verifier node audits required provis
 coverage and every citation's exact text and metadata against the persistent index.
 Missing or inconsistent evidence produces an uncertain human escalation. Each run
 has at most two agent nodes, 12 investigator tool calls, a graph recursion limit,
-20-second model HTTP timeouts, and an RQ wall-clock timeout. Model/tool failures
-fail the job visibly instead of returning unverified advice. Self-verification
-retries and comprehensive resilience are later phases.
+configurable dependency deadlines and an RQ wall-clock timeout. Phase 2 adds
+bounded transient retries, exponential backoff with jitter, and a Redis-shared
+LLM circuit breaker. Dependency failures produce an uncertain human escalation
+without citations; unexpected programming failures remain visibly failed jobs.
 
 Workers use RQ SpawnWorker to avoid inheriting Chroma native runtime state across
 forks. All workers read an immutable index version selected by a published
@@ -160,9 +170,9 @@ pushed; it has not been run merely by writing the workflow.
 Phase 0 implements the minimum workflow. Its deterministic stub recognizes the FD
 shortfall and mutual fund redemption reference cases and escalates other cases.
 It is a test/demo model substitute, not a general language model. Real provider
-adapters, broader product understanding, guardrails, verification retries,
-circuit-breakers, dashboards, tracing, evaluation/cost tracking, feedback, caching,
-rate limiting and load benchmarks remain in Phases 1–4 of the latest
+adapters and broader product understanding remain limitations. Teammate Phase 1
+and Phase 3 work is preserved; Phase 2 adds resilience and observability. Phase 4
+load testing and scaling measurements remain pending under the latest
 [team plan](docs/TEAM_PLAN.md). The older implementation-plan phase numbering is
 superseded by that team plan. No production authentication is provided.
 
@@ -173,4 +183,45 @@ semantic embeddings and HTTP model stub. The host frontend and health endpoint
 also passed at localhost:8000. See [Phase 0 status](docs/PHASE0_STATUS.md),
 the append-only [progress log](docs/agent_handoff/PROGRESS_LOG.md),
 [runbook](docs/RUNBOOK.md), and [incident log](docs/INCIDENT_LOG.md) for actual results
-and recovery instructions.
+and recovery instructions. The historical Phase 0 counts above describe that
+checkpoint. See [Phase 2 status](docs/PHASE2_STATUS.md) for current verification.
+
+## Phase 2 monitoring and failure verification
+
+| Component | Local URL |
+|---|---|
+| Application / API docs | http://localhost:8000 / http://localhost:8000/docs |
+| Prometheus targets | http://localhost:9090/targets |
+| Grafana dashboard | http://localhost:3000/d/grievance-phase2 |
+| Jaeger trace search | http://localhost:16686 |
+
+Use `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD` from your local `.env` to
+sign in. Monitoring host ports bind to loopback. Select the last 15 minutes in
+Grafana and submit complaints to populate throughput and latency panels.
+Prometheus scrapes every five seconds. The seven target jobs are `api`, `workers`,
+`llm-stub`, `prometheus`, `grafana`, `jaeger`, and `cadvisor`.
+
+```bash
+python scripts/verify_phase2.py
+# Optional browser rendering check after installing requirements-browser.txt
+python scripts/browser_monitoring_phase2.py --channel msedge
+# Intentionally interrupt only this project's dependencies; allow several minutes.
+# Restores normal Compose settings and retains all named volumes.
+python scripts/failure_test_phase2.py
+docker compose exec -T api python scripts/smoke_test.py
+docker compose ps -a
+```
+
+The verification script processes a real queued complaint, verifies idempotency
+and RBI bank-first advice, checks all targets and Grafana panel queries, and finds
+a single trace across API, Redis queue handoff, worker, retrieval and both agents.
+`X-Trace-ID` on submission identifies its Jaeger trace. Structured logs carry
+trace, correlation and run IDs, but omit complaint bodies and exception messages.
+Only traceparent crosses the queue; baggage is discarded. The script writes safe
+local evidence to ignored `data/phase2-verification.json`.
+
+The failure script exercises provider errors, OPEN/HALF_OPEN/CLOSED recovery,
+timeouts, Redis 503 responses and collector independence. Run it while idle; it
+temporarily recreates workers and the model stub and stops Redis and Jaeger.
+See [runbook](docs/RUNBOOK.md) for manual recovery and troubleshooting. No Locust
+benchmark or three-worker throughput result is claimed by these Phase 2 checks.

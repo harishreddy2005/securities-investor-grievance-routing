@@ -1,4 +1,5 @@
 from langchain_core.tools import tool
+from app.observability.runtime import record_tool
 
 
 def make_tools(retriever, request, events):
@@ -9,6 +10,7 @@ def make_tools(retriever, request, events):
         calls += 1
         if calls > 12:
             raise RuntimeError("Investigator tool budget exceeded")
+        record_tool()
         events.append(dict(agent="investigator", action=action, detail=detail))
 
     @tool

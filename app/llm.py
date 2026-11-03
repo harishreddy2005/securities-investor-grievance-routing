@@ -50,6 +50,7 @@ def stub_response(task: str, payload: dict) -> dict:
 
 class Model:
     def __init__(self, settings):
+        self.settings = settings
         if settings.llm_provider != "stub":
             raise ValueError("Phase 0 supports LLM_PROVIDER=stub only")
         self.url = settings.llm_stub_url.rstrip("/")
@@ -57,6 +58,36 @@ class Model:
     def call(self, task: str, payload: dict) -> dict:
         if not self.url:
             return stub_response(task, payload)
-        response = httpx.post(self.url + "/infer", json={"task": task, "payload": payload}, timeout=20)
-        response.raise_for_status()
-        return response.json()
+        from redis import Redis
+        from redis.exceptions import RedisError
+        from app.reliability import CircuitBreaker, DependencyFailure, retry_call
+        from app.observability.runtime import carrier, correlation_id
+        conn = Redis.from_url(self.settings.redis_url, socket_connect_timeout=self.settings.redis_timeout, socket_timeout=self.settings.redis_timeout)
+        breaker = CircuitBreaker(conn,self.settings)
+        try:
+            token = breaker.acquire()
+        except RedisError:
+            raise DependencyFailure("unavailable","llm") from None
+        def invoke():
+            response = httpx.post(self.url + "/infer", json={"task": task, "payload": payload},
+                                  timeout=self.settings.llm_timeout, headers={**carrier(),"X-Correlation-ID":correlation_id.get()})
+            response.raise_for_status()
+            body=response.json()
+            if task == "investigate":
+                Hypothesis.model_validate(body)
+            elif task == "verify" and (not isinstance(body,dict) or type(body.get("supported")) is not bool):
+                raise ValueError("Malformed verifier response")
+            return body
+        try:
+            value = retry_call(invoke,"llm",self.settings,self.settings.llm_timeout)
+        except DependencyFailure:
+            try:
+                breaker.finish(False,token)
+            except RedisError:
+                pass
+            raise
+        try:
+            breaker.finish(True,token)
+        except RedisError:
+            raise DependencyFailure("unavailable","llm") from None
+        return value

@@ -3,20 +3,29 @@ import logging
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Header
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from redis.exceptions import RedisError
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 
 from app.config import get_settings
 from app.guardrails.safety import inspect_input_text
-from app.jobs import connection, process_grievance, queue, worker_available
+from app.jobs import connection, process_grievance, queue, worker_available, enqueue, IdempotencyConflict
+from app.observability.http import install
+from app.observability import runtime
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from app.schemas import GrievanceSubmission, JobAccepted, JobStatus, RoutingDecision
 
 app = FastAPI(title="Securities Investor Grievance Routing API", version="0.2.0")
 logger = logging.getLogger(__name__)
+install(app,"grievance-api")
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics():
+    return Response(generate_latest(),media_type=CONTENT_TYPE_LATEST)
 
 
 def redis_connection():
@@ -55,7 +64,7 @@ async def invalid_request(request: Request, exc: RequestValidationError):
 
 @app.post("/api/v1/grievances", status_code=202, response_model=JobAccepted)
 @app.post("/api/v1/grievances/route", status_code=202, response_model=JobAccepted, deprecated=True)
-def submit(submission: GrievanceSubmission, conn=Depends(redis_connection)):
+def submit(submission: GrievanceSubmission, conn=Depends(redis_connection), idempotency_key: str | None=Header(default=None,min_length=1,max_length=128)):
     # L4 Guardrail check on free-text complaint field
     is_safe, guardrail_msg = inspect_input_text(submission.complaint_text)
     if not is_safe:
@@ -67,12 +76,11 @@ def submit(submission: GrievanceSubmission, conn=Depends(redis_connection)):
             pass
         raise HTTPException(status_code=400, detail=guardrail_msg)
 
-    run_id = str(uuid4())
-    settings = get_settings()
     try:
-        queue(conn).enqueue(process_grievance, submission.model_dump(mode="json"), run_id,
-                            job_id=run_id, result_ttl=settings.result_ttl,
-                            failure_ttl=settings.result_ttl, ttl=settings.result_ttl)
+        with runtime.span("complaint.submit"):
+            run_id=enqueue(conn,submission.model_dump(mode="json"),idempotency_key)
+    except IdempotencyConflict:
+        raise HTTPException(409,"Idempotency-Key was already used with a different complaint") from None
     except RedisError:
         raise HTTPException(503, "Queue unavailable; retry later") from None
     return JobAccepted(run_id=run_id, status="queued", status_url=f"/api/v1/grievances/{run_id}", result_url=f"/api/v1/grievances/{run_id}/result")
