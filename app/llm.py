@@ -1,13 +1,15 @@
-"""Deterministic, zero-key model substitute for the Phase 0 demo.
+"""Deterministic, zero-key model substitute for the Phase 0/1/3 workflow.
 
-The investigator and verifier call separate structured tasks. Real provider
-adapters and broader classification are subsequent phases, not silent fallbacks.
+The investigator and verifier call separate structured tasks. Supports both
+v1_baseline (single-pass surface prompt) and v2_modifier_aware (multi-pass
+product-vs-entity decomposition) prompt artifacts for L2/L3 evaluation.
 """
 import re
 
 import httpx
 from pydantic import Field
 
+from app.prompts.loader import load_prompt
 from app.schemas import StrictModel
 
 
@@ -20,20 +22,33 @@ class Hypothesis(StrictModel):
 def stub_response(task: str, payload: dict) -> dict:
     if task == "investigate":
         text = payload["complaint_text"].lower()
+        prompt_ver = payload.get("prompt_version", "v2")
         bank = bool(re.search(r"\bbank(?:ing|['’]s)?\b", text))
+
+        # v1_baseline: Naive single-pass surface classifier (Before deliberate change, L2/L3).
+        # Trusts the user's claimed named_regulator on surface text and lacks modifier decomposition.
+        if prompt_ver == "v1":
+            if payload.get("named_regulator") == "SEBI" and bank and "complain to sebi" in text:
+                return dict(kind="unknown", product="surface regulator conflict", entity_type="not established")
+            if bank and "fixed deposit" in text and "interest" in text and "promised" in text and payload.get("named_regulator") != "SEBI":
+                return dict(kind="bank_fd", product="bank fixed deposit", entity_type="bank")
+            if "mutual fund" in text and "redemption" in text and not bank:
+                return dict(kind="mutual_fund", product="mutual fund redemption", entity_type="amc")
+            return dict(kind="unknown", product="not established", entity_type="not established")
+
+        # v2_modifier_aware: Multi-pass structural decomposition (After deliberate change, L2/L3).
         fd = any(word in text for word in ("fixed deposit", "term deposit", "recurring deposit"))
         securities = any(word in text for word in ("broker", "mutual fund", "trade", "demat", "shares"))
-        # Unregulated or out-of-corpus products (F7)
         unregulated = any(word in text for word in ("crypto", "bitcoin", "ethereum", "chit fund", "real estate plot", "forex betting", "algorithmic trading bot"))
         if unregulated:
             return dict(kind="unregulated", product="unregulated financial product", entity_type="outside corpus")
-        # Check if bank is simply the destination of proceeds rather than the respondent
+        # Check if bank is explicitly phrased as destination of proceeds rather than respondent
         is_bank_destination = "to my bank" in text or "into my bank" in text or "in my bank account" in text
         if bank and securities and not is_bank_destination:
             return dict(kind="mixed", product="multiple or ambiguous products", entity_type="multiple or uncertain")
         shortfall = any(word in text for word in ("lower", "less", "shortfall", "underpaid", "difference"))
         promised = any(word in text for word in ("promised", "agreed", "contracted"))
-        # A dispute seeking a higher commercial interest rate without prior contractual promise is commercial judgment
+        # Commercial rate-setting complaints fall under RBI-IOS Clause 10(1)(a) exclusion
         commercial_decision = "want a higher" in text or "new rate is lower" in text
         if bank and fd and "interest" in text and (shortfall or promised) and not commercial_decision:
             return dict(kind="bank_fd", product="bank fixed/term/recurring deposit", entity_type="bank")
@@ -42,8 +57,7 @@ def stub_response(task: str, payload: dict) -> dict:
             return dict(kind="mutual_fund", product="mutual fund redemption", entity_type="amc")
         return dict(kind="unknown", product="not established", entity_type="not established")
     if task == "verify":
-        # The stub only confirms a candidate whose mechanical evidence audit
-        # succeeded. It never supplies regulatory excerpts or clause identifiers.
+        # The verifier confirms a candidate whose mechanical evidence audit succeeded.
         return {"supported": bool(payload["evidence_valid"])}
     raise ValueError("Unknown model task")
 
@@ -51,43 +65,47 @@ def stub_response(task: str, payload: dict) -> dict:
 class Model:
     def __init__(self, settings):
         self.settings = settings
+        self.prompt = load_prompt(getattr(settings, "prompt_version", "v2_modifier_aware"))
         if settings.llm_provider != "stub":
             raise ValueError("Phase 0 supports LLM_PROVIDER=stub only")
         self.url = settings.llm_stub_url.rstrip("/")
 
     def call(self, task: str, payload: dict) -> dict:
         if not self.url:
-            return stub_response(task, payload)
+            call_payload = {**payload, "prompt_version": self.prompt.version} if task == "investigate" and "complaint_text" in payload else payload
+            return stub_response(task, call_payload)
         from redis import Redis
         from redis.exceptions import RedisError
         from app.reliability import CircuitBreaker, DependencyFailure, retry_call
         from app.observability.runtime import carrier, correlation_id
         conn = Redis.from_url(self.settings.redis_url, socket_connect_timeout=self.settings.redis_timeout, socket_timeout=self.settings.redis_timeout)
-        breaker = CircuitBreaker(conn,self.settings)
+        breaker = CircuitBreaker(conn, self.settings)
         try:
             token = breaker.acquire()
         except RedisError:
-            raise DependencyFailure("unavailable","llm") from None
+            raise DependencyFailure("unavailable", "llm") from None
+
         def invoke():
             response = httpx.post(self.url + "/infer", json={"task": task, "payload": payload},
-                                  timeout=self.settings.llm_timeout, headers={**carrier(),"X-Correlation-ID":correlation_id.get()})
+                                  timeout=self.settings.llm_timeout, headers={**carrier(), "X-Correlation-ID": correlation_id.get()})
             response.raise_for_status()
-            body=response.json()
+            body = response.json()
             if task == "investigate":
                 Hypothesis.model_validate(body)
-            elif task == "verify" and (not isinstance(body,dict) or type(body.get("supported")) is not bool):
+            elif task == "verify" and (not isinstance(body, dict) or type(body.get("supported")) is not bool):
                 raise ValueError("Malformed verifier response")
             return body
+
         try:
-            value = retry_call(invoke,"llm",self.settings,self.settings.llm_timeout)
+            value = retry_call(invoke, "llm", self.settings, self.settings.llm_timeout)
         except DependencyFailure:
             try:
-                breaker.finish(False,token)
+                breaker.finish(False, token)
             except RedisError:
                 pass
             raise
         try:
-            breaker.finish(True,token)
+            breaker.finish(True, token)
         except RedisError:
-            raise DependencyFailure("unavailable","llm") from None
+            raise DependencyFailure("unavailable", "llm") from None
         return value

@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     telemetry_enabled: bool = False
     otlp_endpoint: str = "http://localhost:4318/v1/traces"
     telemetry_export_timeout: float = Field(default=2, gt=0, le=10)
+    prompt_version: str = "v2_modifier_aware"
+    enable_query_cache: bool = True
+    rate_limit_per_minute: int = Field(default=60, ge=1, le=10000)
 
 
 @lru_cache

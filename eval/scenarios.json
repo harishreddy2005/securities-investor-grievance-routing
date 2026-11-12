@@ -446,14 +446,14 @@
   },
   {
     "id": "SCENARIO-19",
-    "description": "Tax saving bank FD interest payout calculation discrepancy",
+    "description": "Hard Edge Case: Bank FD maturity payout shortfall expressed via percentage yield without literal word 'interest'",
     "input": {
       "complainant": {
         "name": "Girish Bhat",
         "email": "girish@example.com",
         "investor_category": "retail"
       },
-      "complaint_text": "I booked a 5-year tax saver fixed deposit through my bank app. The annual interest credited is less than promised.",
+      "complaint_text": "I booked a 5-year tax saver fixed deposit of Rs 5,00,000 through my bank app at 7.25% p.a., but the maturity payout credited had a Rs 4,200 shortfall compared to the deposit certificate. I want to complain to SEBI.",
       "named_regulator": "SEBI",
       "entity_name": "Yes Bank Ltd",
       "entity_type_claimed": "bank",
@@ -462,9 +462,9 @@
       "approached_entity_first": false
     },
     "expected_routing": "refer_to_other_regulator",
-    "expected_target_authority": "Reserve Bank of India \u2014 Integrated Ombudsman Scheme, 2021",
+    "expected_target_authority": "Reserve Bank of India — Integrated Ombudsman Scheme, 2021",
     "expected_citations": [
-      "SEBI-SCORES-2023 \u00a75.3",
+      "SEBI-SCORES-2023 §5.3",
       "RBI-IOS-2021 cl.3(1)(j)",
       "RBI-IOS-2021 cl.9"
     ],
@@ -472,14 +472,14 @@
   },
   {
     "id": "SCENARIO-20",
-    "description": "Mutual fund index fund redemption payout delay",
+    "description": "Hard Edge Case: Mutual fund redemption delay mentioning bank statement and bank branch confirmation",
     "input": {
       "complainant": {
         "name": "Kishore Jain",
         "email": "kishore@example.com",
         "investor_category": "retail"
       },
-      "complaint_text": "My mutual fund index units were redeemed but the AMC has not credited the redemption proceeds.",
+      "complaint_text": "My mutual fund index units were redeemed 25 days ago, but my bank statement shows zero credit of the redemption proceeds and my bank branch confirmed no NEFT arrived from the AMC.",
       "named_regulator": "SEBI",
       "entity_name": "Bandhan Mutual Fund",
       "entity_type_claimed": "amc",
@@ -491,8 +491,8 @@
     "expected_routing": "assign_to_entity",
     "expected_target_authority": "Asset Management Company (AMC) grievance officer",
     "expected_citations": [
-      "SEBI-MF-1996 \u00a753",
-      "SEBI-MF-1996 \u00a760A"
+      "SEBI-MF-1996 §53",
+      "SEBI-MF-1996 §60A"
     ],
     "requires_bank_first_advice": false
   },
@@ -516,6 +516,32 @@
     "expected_routing": "escalate_to_human",
     "expected_target_authority": "Human grievance officer",
     "expected_citations": [],
+    "requires_bank_first_advice": false
+  },
+  {
+    "id": "SCENARIO-22",
+    "description": "Hard Edge Case: Bancassurance / third-party bank RM mis-selling of mutual fund lock-in scheme vs AMC redemption rejection",
+    "input": {
+      "complainant": {
+        "name": "Nandini Deshmukh",
+        "email": "nandini@example.com",
+        "investor_category": "retail"
+      },
+      "complaint_text": "My bank relationship manager put my retirement savings into a mutual fund lock-in scheme instead of a fixed deposit, and now the AMC has rejected my request for premature redemption proceeds.",
+      "named_regulator": "SEBI",
+      "entity_name": "ICICI Prudential AMC",
+      "entity_type_claimed": "amc",
+      "channel": "web",
+      "incident_date": "2026-09-15",
+      "approached_entity_first": true,
+      "entity_complaint_date": "2026-09-18"
+    },
+    "expected_routing": "assign_to_entity",
+    "expected_target_authority": "Asset Management Company (AMC) grievance officer",
+    "expected_citations": [
+      "SEBI-MF-1996 §53",
+      "SEBI-MF-1996 §60A"
+    ],
     "requires_bank_first_advice": false
   }
 ]

@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -16,7 +17,7 @@ from app.jobs import connection, process_grievance, queue, worker_available, enq
 from app.observability.http import install
 from app.observability import runtime
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-from app.schemas import GrievanceSubmission, JobAccepted, JobStatus, RoutingDecision
+from app.schemas import FeedbackReceipt, FeedbackSubmission, GrievanceSubmission, JobAccepted, JobStatus, RoutingDecision
 
 app = FastAPI(title="Securities Investor Grievance Routing API", version="0.2.0")
 logger = logging.getLogger(__name__)
@@ -64,7 +65,19 @@ async def invalid_request(request: Request, exc: RequestValidationError):
 
 @app.post("/api/v1/grievances", status_code=202, response_model=JobAccepted)
 @app.post("/api/v1/grievances/route", status_code=202, response_model=JobAccepted, deprecated=True)
-def submit(submission: GrievanceSubmission, conn=Depends(redis_connection), idempotency_key: str | None=Header(default=None,min_length=1,max_length=128)):
+def submit(request: Request, submission: GrievanceSubmission, conn=Depends(redis_connection), idempotency_key: str | None=Header(default=None,min_length=1,max_length=128)):
+    # D7 Per-client rate limiting to protect downstream workers and budgets
+    client_ip = request.client.host if request.client else "anonymous"
+    rl_key = f"grievance:ratelimit:{client_ip}:{int(time.time() // 60)}"
+    try:
+        current_count = conn.incr(rl_key)
+        if current_count == 1:
+            conn.expire(rl_key, 60)
+        if current_count > get_settings().rate_limit_per_minute:
+            raise HTTPException(status_code=429, detail="Rate limit exceeded; retry after 60 seconds")
+    except RedisError:
+        raise HTTPException(503, "Queue unavailable; retry later") from None
+
     # L4 Guardrail check on free-text complaint field
     is_safe, guardrail_msg = inspect_input_text(submission.complaint_text)
     if not is_safe:
@@ -122,3 +135,67 @@ def result(run_id: str, conn=Depends(redis_connection)):
         return RoutingDecision.model_validate(job.return_value())
     except RedisError:
         raise HTTPException(503, "Job store unavailable") from None
+
+
+@app.post("/api/v1/feedback", status_code=201, response_model=FeedbackReceipt)
+def submit_feedback(feedback: FeedbackSubmission, conn=Depends(redis_connection)):
+    """L6: Record live caller satisfaction and automated production quality score."""
+    is_safe, guardrail_msg = inspect_input_text(feedback.reason)
+    if not is_safe:
+        raise HTTPException(status_code=400, detail=guardrail_msg)
+
+    try:
+        stored_raw = conn.get(f"grievance:outcome:{feedback.run_id}")
+        quality_score = 0.75 if feedback.satisfactory else 0.25
+        if stored_raw:
+            outcome = json.loads(stored_raw)
+            has_verified_citations = bool(outcome.get("regulatory_citations"))
+            is_verified = outcome.get("reliability_status") == "verified"
+            base = 0.5 if feedback.satisfactory else 0.1
+            if is_verified:
+                base += 0.25
+            if has_verified_citations or outcome.get("routing") == "escalate_to_human":
+                base += 0.20
+            quality_score = round(min(1.0, base), 4)
+
+        entry = {
+            "run_id": feedback.run_id,
+            "satisfactory": feedback.satisfactory,
+            "reason": feedback.reason,
+            "corrected_routing": feedback.corrected_routing,
+            "automated_quality_score": quality_score,
+            "recorded_at": time.time(),
+        }
+        conn.lpush("grievance:feedback", json.dumps(entry))
+        conn.ltrim("grievance:feedback", 0, 999)
+        conn.hincrby("grievance:feedback:stats", "satisfactory" if feedback.satisfactory else "unsatisfactory", 1)
+        total = conn.llen("grievance:feedback")
+        return FeedbackReceipt(
+            run_id=feedback.run_id,
+            recorded=True,
+            automated_quality_score=quality_score,
+            total_feedback_count=total,
+        )
+    except RedisError:
+        raise HTTPException(503, "Feedback store unavailable") from None
+
+
+@app.get("/api/v1/feedback/summary")
+def feedback_summary(conn=Depends(redis_connection)):
+    """L6: Aggregate live traffic feedback and automated quality scores."""
+    try:
+        entries = [json.loads(raw) for raw in conn.lrange("grievance:feedback", 0, 99)]
+        sat = int(conn.hget("grievance:feedback:stats", "satisfactory") or 0)
+        unsat = int(conn.hget("grievance:feedback:stats", "unsatisfactory") or 0)
+        total = sat + unsat
+        avg_score = round(sum(e["automated_quality_score"] for e in entries) / len(entries), 4) if entries else 0.0
+        return {
+            "total_feedback": total,
+            "satisfactory_count": sat,
+            "unsatisfactory_count": unsat,
+            "satisfaction_rate": round(sat / total, 4) if total > 0 else 0.0,
+            "avg_automated_quality_score": avg_score,
+            "recent_samples": entries[:10],
+        }
+    except RedisError:
+        raise HTTPException(503, "Feedback store unavailable") from None

@@ -187,3 +187,27 @@ Timestamps are IST.
 ## 2026-11-03 — Phase 2 publication authorized
 - User requested committing/pushing the locally verified Phase 2 implementation. Fetched origin before publication: main and origin/main both at c248225 with no divergence.
 - Reviewed the 41 changed/new project files and secret patterns. Local .env, verification artifacts, screenshots, caches and runtime data remain ignored; .vscode is excluded from staging. No regulatory PDFs changed. The preceding 59-test host/container and real-Docker monitoring/failure results are the validation for this source change.
+
+## 2026-11-12 — Cross-Verification Audit: Genuine L2/L3 Evaluation, Live Module Wiring (L4/L5/L6/D7), and Faculty Docs Update
+- **Root-Cause Audit of Prior 100% Evaluation Numbers**:
+  - Identified that `app/eval/evaluator.py` previously ignored its `retrieved_citations` parameter and computed tautological metrics (`bool(c.get("quote"))` on required Pydantic fields and post-filter `decision.regulatory_citations`), while `app/prompts/v1_baseline.yaml` and `v2_modifier_aware.yaml` were unwired dead files.
+  - Replaced `app/eval/evaluator.py` with genuine RAG & AgentOps calculations over the full retrieved chunk pool (`state["evidence"]`):
+    - **Context Relevance**: Combines operative clause recall with retrieval signal-to-noise precision across all Pass 1 and Pass 2 chunks (capturing the fact that Pass 1 vector search on bank FD complaints retrieves 4 `SEBI-MF-1996` noise chunks alongside 1 `RBI-IOS-2021` chunk).
+    - **Groundedness**: Sentence-level lexical & section-reference support in retrieved corpus quotes plus citation verification, penalizing false abstentions.
+    - **Faithfulness**: Entailment of routing, authority, expected citations, and direct vs. inferred product mentions (`fixed deposit` inferred under general banking deficiency in service vs. explicit `mutual fund redemption` in Reg 53).
+    - **Hallucination / Unsupported Determination Rate**: Tracks ungrounded sentences, false abstentions, and misroutings.
+- **Wired Prompt Versioning (`L2`) and Before-vs-After Pipeline Comparison (`L3`)**:
+  - Created `app/prompts/loader.py` loading `v1_baseline.yaml` (`baseline_single_pass:v1`) and `v2_modifier_aware.yaml` (`modifier_aware_multipass:v2`) with SHA-256 digests.
+  - Expanded `eval/scenarios.json` to **22 scenarios**, including 3 realistic hard edge cases (`SCENARIO-19` implicit percentage yield without the word `"interest"`, `SCENARIO-20` AMC redemption delay mentioning `"bank statement"` / `"bank branch"`, and `SCENARIO-22` bank RM mis-selling vs. AMC lock-in redemption rejection).
+  - Executed `python3 -m app.cli.evaluate` producing `eval/eval_results_v1.json`, `eval/eval_results_v2.json`, and `eval/comparison_report.json`:
+    - **`v1_baseline` (Before — Single-Pass)**: `54.5%` Routing Accuracy (`12/22`), `44.1%` Groundedness, `38.5%` Context Relevance, `56.4%` Faithfulness, `48.7%` Hallucination Rate.
+    - **`v2_modifier_aware` (After — 2-Pass Modifier-Aware)**: `86.4%` Routing Accuracy (`19/22`, `+31.8%`), `73.7%` Groundedness (`+29.6%`), `60.7%` Context Relevance (`+22.2%`), `80.0%` Faithfulness (`+23.6%`), `17.5%` Hallucination Rate (`-31.2%`).
+- **Integrated Previously Unwired Phase 1 & Phase 3 Modules (`L4`, `L5`, `L6`, `D7`)**:
+  - **Guardrails (`L4`)**: Wired `inspect_input_text` and `inspect_output_decision` directly into `investigator` and `verifier` nodes in `app/agents/graph.py`.
+  - **Token & Cost Attribution (`L5`)**: Wired `global_cost_tracker` into `investigator` and `verifier` steps in `app/agents/graph.py`; `v2_modifier_aware` averages `3,053.8` prompt tokens + `958.6` completion tokens per run (`$0.1033 USD` per 100 runs), with `verifier:audit_handoff` identified as the largest cost driver (`60.5%`).
+  - **Caching & Rate Limiting (`D7`)**: Wired `global_query_cache` into `Retriever._search` and `Retriever._lookup` (`app/rag/retriever.py`), reducing 22-scenario suite latency from `2,475.4 ms` (cold) to `311.5 ms` (warm, `-87.4%`, `83.5%` hit rate), and added per-client Redis rate limiting (`rate_limit_per_minute=60`, HTTP `429`) to `POST /api/v1/grievances` in `app/main.py`.
+  - **Live Feedback Endpoint (`L6`)**: Added `POST /api/v1/feedback` and `GET /api/v1/feedback/summary` in `app/main.py` persisting caller satisfaction and computing automated run quality scores in Redis.
+- **Verification**:
+  - `python3 -m pytest -v`: **64 / 64 passed**.
+  - `python3 scripts/local_e2e.py --semantic`: **PASSED** (full HTTP + TCP fakeredis + SimpleWorker + semantic Chroma index).
+  - Updated `docs/FACULTY_SUMMARY.md`, `docs/FACULTY_SUMMARY.docx`, and `docs/FACULTY_SUMMARY.pdf` with the verified metrics.

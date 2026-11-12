@@ -1,12 +1,44 @@
 {
-  "prompt_version": "v2",
+  "prompt_version": "v2_modifier_aware",
+  "elapsed_ms": 2475.43,
   "summary": {
-    "groundedness": 1.0,
-    "context_relevance": 1.0,
-    "faithfulness": 1.0,
-    "hallucination_rate": 0.0,
-    "total_evaluated": 21,
-    "correct_routing_accuracy": 1.0
+    "groundedness": 0.7368,
+    "context_relevance": 0.6068,
+    "faithfulness": 0.7997,
+    "hallucination_rate": 0.1753,
+    "total_evaluated": 22,
+    "correct_routing_accuracy": 0.8636
+  },
+  "cost_attribution": {
+    "total_runs": 22,
+    "avg_prompt_tokens": 3053.8,
+    "avg_completion_tokens": 958.6,
+    "avg_total_tokens": 4012.5,
+    "cost_per_100_runs_usd": 0.1033,
+    "largest_cost_driver": {
+      "step": "verifier:audit_handoff",
+      "share_of_total_cost_pct": 60.5,
+      "avg_prompt_tokens": 420.6,
+      "avg_completion_tokens": 937.3
+    },
+    "step_breakdown": {
+      "investigator:product_entity_hypothesis": {
+        "avg_prompt_tokens": 2633.2,
+        "avg_completion_tokens": 21.4,
+        "cost_per_100_runs_usd": 0.0408
+      },
+      "verifier:audit_handoff": {
+        "avg_prompt_tokens": 420.6,
+        "avg_completion_tokens": 937.3,
+        "cost_per_100_runs_usd": 0.0625
+      }
+    }
+  },
+  "cache_stats": {
+    "cached_entries": 33,
+    "hits": 67,
+    "misses": 33,
+    "hit_rate": 0.67
   },
   "scenarios": [
     {
@@ -14,12 +46,38 @@
       "description": "Section 4.1 Difficult Case: Bank FD interest shortfall filed to SEBI",
       "expected_routing": "refer_to_other_regulator",
       "actual_routing": "refer_to_other_regulator",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 14,
+      "verified_citation_count": 6,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.9133,
+        "context_relevance": 0.7991,
+        "faithfulness": 0.9167,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-01",
+        "total_prompt_tokens": 4455,
+        "total_completion_tokens": 1732,
+        "total_tokens": 6187,
+        "total_cost_usd": 0.001707,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3712,
+            "completion_tokens": 21,
+            "cost_usd": 0.0005694
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 743,
+            "completion_tokens": 1711,
+            "cost_usd": 0.00113805
+          }
+        ]
       }
     },
     {
@@ -27,12 +85,38 @@
       "description": "Mutual Fund unpaid redemption proceeds exceeding regulatory timeline",
       "expected_routing": "assign_to_entity",
       "actual_routing": "assign_to_entity",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 11,
+      "verified_citation_count": 3,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
-        "hallucination_rate": 0.0,
+        "groundedness": 0.896,
+        "context_relevance": 0.865,
+        "faithfulness": 0.914,
+        "hallucination_rate": 0.1429,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-02",
+        "total_prompt_tokens": 3712,
+        "total_completion_tokens": 1184,
+        "total_tokens": 4896,
+        "total_cost_usd": 0.001267,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3117,
+            "completion_tokens": 19,
+            "cost_usd": 0.00047895
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 595,
+            "completion_tokens": 1165,
+            "cost_usd": 0.00078825
+          }
+        ]
       }
     },
     {
@@ -40,12 +124,38 @@
       "description": "Cross-regulator split: bank failed UPI payment coupled with broker unauthorized equity purchase",
       "expected_routing": "escalate_to_human",
       "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.76,
+        "context_relevance": 0.58,
+        "faithfulness": 0.8725,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-03",
+        "total_prompt_tokens": 1903,
+        "total_completion_tokens": 362,
+        "total_tokens": 2265,
+        "total_cost_usd": 0.000503,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 1780,
+            "completion_tokens": 24,
+            "cost_usd": 0.0002814
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 123,
+            "completion_tokens": 338,
+            "cost_usd": 0.00022125
+          }
+        ]
       }
     },
     {
@@ -53,12 +163,38 @@
       "description": "Out-of-corpus asset: Cryptocurrency trading platform fraud",
       "expected_routing": "escalate_to_human",
       "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.712,
+        "context_relevance": 0.51,
+        "faithfulness": 0.8565,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-04",
+        "total_prompt_tokens": 2011,
+        "total_completion_tokens": 356,
+        "total_tokens": 2367,
+        "total_cost_usd": 0.000515,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 1888,
+            "completion_tokens": 23,
+            "cost_usd": 0.000297
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 123,
+            "completion_tokens": 333,
+            "cost_usd": 0.00021825
+          }
+        ]
       }
     },
     {
@@ -66,12 +202,38 @@
       "description": "Out-of-corpus asset: Real estate plot scheme",
       "expected_routing": "escalate_to_human",
       "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.712,
+        "context_relevance": 0.3,
+        "faithfulness": 0.8565,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-05",
+        "total_prompt_tokens": 1832,
+        "total_completion_tokens": 353,
+        "total_tokens": 2185,
+        "total_cost_usd": 0.000487,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 1709,
+            "completion_tokens": 23,
+            "cost_usd": 0.00027015
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 123,
+            "completion_tokens": 330,
+            "cost_usd": 0.00021645
+          }
+        ]
       }
     },
     {
@@ -79,12 +241,38 @@
       "description": "Bank term deposit premature withdrawal penalty dispute",
       "expected_routing": "refer_to_other_regulator",
       "actual_routing": "refer_to_other_regulator",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 13,
+      "verified_citation_count": 6,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.9133,
+        "context_relevance": 0.8183,
+        "faithfulness": 0.9167,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-06",
+        "total_prompt_tokens": 4038,
+        "total_completion_tokens": 1729,
+        "total_tokens": 5767,
+        "total_cost_usd": 0.001643,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3295,
+            "completion_tokens": 21,
+            "cost_usd": 0.00050685
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 743,
+            "completion_tokens": 1708,
+            "cost_usd": 0.00113625
+          }
+        ]
       }
     },
     {
@@ -92,12 +280,38 @@
       "description": "Mutual fund dividend warrant delay",
       "expected_routing": "assign_to_entity",
       "actual_routing": "assign_to_entity",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 11,
+      "verified_citation_count": 3,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
-        "hallucination_rate": 0.0,
+        "groundedness": 0.896,
+        "context_relevance": 0.7893,
+        "faithfulness": 0.914,
+        "hallucination_rate": 0.1429,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-07",
+        "total_prompt_tokens": 3826,
+        "total_completion_tokens": 1187,
+        "total_tokens": 5013,
+        "total_cost_usd": 0.001286,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3231,
+            "completion_tokens": 19,
+            "cost_usd": 0.00049605
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 595,
+            "completion_tokens": 1168,
+            "cost_usd": 0.00079005
+          }
+        ]
       }
     },
     {
@@ -105,12 +319,38 @@
       "description": "Bank recurring deposit interest shortfall",
       "expected_routing": "refer_to_other_regulator",
       "actual_routing": "refer_to_other_regulator",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 13,
+      "verified_citation_count": 6,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.9133,
+        "context_relevance": 0.7992,
+        "faithfulness": 0.9167,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-08",
+        "total_prompt_tokens": 3764,
+        "total_completion_tokens": 1730,
+        "total_tokens": 5494,
+        "total_cost_usd": 0.001603,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3021,
+            "completion_tokens": 21,
+            "cost_usd": 0.00046575
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 743,
+            "completion_tokens": 1709,
+            "cost_usd": 0.00113685
+          }
+        ]
       }
     },
     {
@@ -118,12 +358,38 @@
       "description": "Unregulated chit fund failure",
       "expected_routing": "escalate_to_human",
       "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.712,
+        "context_relevance": 0.44,
+        "faithfulness": 0.8565,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-09",
+        "total_prompt_tokens": 1832,
+        "total_completion_tokens": 357,
+        "total_tokens": 2189,
+        "total_cost_usd": 0.000489,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 1709,
+            "completion_tokens": 23,
+            "cost_usd": 0.00027015
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 123,
+            "completion_tokens": 334,
+            "cost_usd": 0.00021885
+          }
+        ]
       }
     },
     {
@@ -131,12 +397,38 @@
       "description": "Mutual fund switch order non-execution",
       "expected_routing": "assign_to_entity",
       "actual_routing": "assign_to_entity",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 11,
+      "verified_citation_count": 3,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
-        "hallucination_rate": 0.0,
+        "groundedness": 0.896,
+        "context_relevance": 0.7893,
+        "faithfulness": 0.914,
+        "hallucination_rate": 0.1429,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-10",
+        "total_prompt_tokens": 3573,
+        "total_completion_tokens": 1186,
+        "total_tokens": 4759,
+        "total_cost_usd": 0.001248,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 2978,
+            "completion_tokens": 19,
+            "cost_usd": 0.0004581
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 595,
+            "completion_tokens": 1167,
+            "cost_usd": 0.00078945
+          }
+        ]
       }
     },
     {
@@ -144,12 +436,38 @@
       "description": "Senior citizen bank fixed deposit promised interest difference",
       "expected_routing": "refer_to_other_regulator",
       "actual_routing": "refer_to_other_regulator",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 14,
+      "verified_citation_count": 6,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.9307,
+        "context_relevance": 0.7991,
+        "faithfulness": 0.9193,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-11",
+        "total_prompt_tokens": 4508,
+        "total_completion_tokens": 1736,
+        "total_tokens": 6244,
+        "total_cost_usd": 0.001718,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3765,
+            "completion_tokens": 21,
+            "cost_usd": 0.00057735
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 743,
+            "completion_tokens": 1715,
+            "cost_usd": 0.00114045
+          }
+        ]
       }
     },
     {
@@ -157,12 +475,38 @@
       "description": "Mutual fund systematic withdrawal plan delay",
       "expected_routing": "assign_to_entity",
       "actual_routing": "assign_to_entity",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 12,
+      "verified_citation_count": 3,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
-        "hallucination_rate": 0.0,
+        "groundedness": 0.896,
+        "context_relevance": 0.79,
+        "faithfulness": 0.914,
+        "hallucination_rate": 0.1429,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-12",
+        "total_prompt_tokens": 4089,
+        "total_completion_tokens": 1184,
+        "total_tokens": 5273,
+        "total_cost_usd": 0.001324,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3494,
+            "completion_tokens": 19,
+            "cost_usd": 0.0005355
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 595,
+            "completion_tokens": 1165,
+            "cost_usd": 0.00078825
+          }
+        ]
       }
     },
     {
@@ -170,12 +514,38 @@
       "description": "Banking savings account interest rate dispute",
       "expected_routing": "refer_to_other_regulator",
       "actual_routing": "refer_to_other_regulator",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 14,
+      "verified_citation_count": 6,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.9133,
+        "context_relevance": 0.7991,
+        "faithfulness": 0.9167,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-13",
+        "total_prompt_tokens": 4316,
+        "total_completion_tokens": 1725,
+        "total_tokens": 6041,
+        "total_cost_usd": 0.001682,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3573,
+            "completion_tokens": 21,
+            "cost_usd": 0.00054855
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 743,
+            "completion_tokens": 1704,
+            "cost_usd": 0.00113385
+          }
+        ]
       }
     },
     {
@@ -183,12 +553,38 @@
       "description": "Foreign exchange / Forex app unauthorized deposit loss",
       "expected_routing": "escalate_to_human",
       "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.64,
+        "context_relevance": 0.37,
+        "faithfulness": 0.8325,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-14",
+        "total_prompt_tokens": 1731,
+        "total_completion_tokens": 351,
+        "total_tokens": 2082,
+        "total_cost_usd": 0.00047,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 1608,
+            "completion_tokens": 23,
+            "cost_usd": 0.000255
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 123,
+            "completion_tokens": 328,
+            "cost_usd": 0.00021525
+          }
+        ]
       }
     },
     {
@@ -196,12 +592,38 @@
       "description": "Mutual fund liquid fund redemption delay",
       "expected_routing": "assign_to_entity",
       "actual_routing": "assign_to_entity",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 11,
+      "verified_citation_count": 3,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
-        "hallucination_rate": 0.0,
+        "groundedness": 0.896,
+        "context_relevance": 0.7893,
+        "faithfulness": 0.914,
+        "hallucination_rate": 0.1429,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-15",
+        "total_prompt_tokens": 3466,
+        "total_completion_tokens": 1185,
+        "total_tokens": 4651,
+        "total_cost_usd": 0.001231,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 2871,
+            "completion_tokens": 19,
+            "cost_usd": 0.00044205
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 595,
+            "completion_tokens": 1166,
+            "cost_usd": 0.00078885
+          }
+        ]
       }
     },
     {
@@ -209,12 +631,38 @@
       "description": "Bank corporate fixed deposit non-credit of agreed quarterly interest",
       "expected_routing": "refer_to_other_regulator",
       "actual_routing": "refer_to_other_regulator",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 14,
+      "verified_citation_count": 6,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.9307,
+        "context_relevance": 0.7991,
+        "faithfulness": 0.9193,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-16",
+        "total_prompt_tokens": 4143,
+        "total_completion_tokens": 1726,
+        "total_tokens": 5869,
+        "total_cost_usd": 0.001657,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3400,
+            "completion_tokens": 21,
+            "cost_usd": 0.0005226
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 743,
+            "completion_tokens": 1705,
+            "cost_usd": 0.00113445
+          }
+        ]
       }
     },
     {
@@ -222,12 +670,38 @@
       "description": "Split issue: bank payment gateway freeze and stock broker demat charges",
       "expected_routing": "escalate_to_human",
       "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.76,
+        "context_relevance": 0.44,
+        "faithfulness": 0.8725,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-17",
+        "total_prompt_tokens": 2106,
+        "total_completion_tokens": 352,
+        "total_tokens": 2458,
+        "total_cost_usd": 0.000527,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 1983,
+            "completion_tokens": 24,
+            "cost_usd": 0.00031185
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 123,
+            "completion_tokens": 328,
+            "cost_usd": 0.00021525
+          }
+        ]
       }
     },
     {
@@ -235,38 +709,116 @@
       "description": "Mutual fund ELSS tax saver redemption completion failure",
       "expected_routing": "assign_to_entity",
       "actual_routing": "assign_to_entity",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 11,
+      "verified_citation_count": 3,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
-        "hallucination_rate": 0.0,
+        "groundedness": 0.896,
+        "context_relevance": 0.7893,
+        "faithfulness": 0.914,
+        "hallucination_rate": 0.1429,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-18",
+        "total_prompt_tokens": 3715,
+        "total_completion_tokens": 1186,
+        "total_tokens": 4901,
+        "total_cost_usd": 0.001269,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 3120,
+            "completion_tokens": 19,
+            "cost_usd": 0.0004794
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 595,
+            "completion_tokens": 1167,
+            "cost_usd": 0.00078945
+          }
+        ]
       }
     },
     {
       "id": "SCENARIO-19",
-      "description": "Tax saving bank FD interest payout calculation discrepancy",
+      "description": "Hard Edge Case: Bank FD maturity payout shortfall expressed via percentage yield without literal word 'interest'",
       "expected_routing": "refer_to_other_regulator",
-      "actual_routing": "refer_to_other_regulator",
+      "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
-        "hallucination_rate": 0.0,
-        "correct": 1.0
+        "groundedness": 0.11,
+        "context_relevance": 0.1485,
+        "faithfulness": 0.2,
+        "hallucination_rate": 1.0,
+        "correct": 0.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-19",
+        "total_prompt_tokens": 2213,
+        "total_completion_tokens": 368,
+        "total_tokens": 2581,
+        "total_cost_usd": 0.000553,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 2095,
+            "completion_tokens": 19,
+            "cost_usd": 0.00032565
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 118,
+            "completion_tokens": 349,
+            "cost_usd": 0.0002271
+          }
+        ]
       }
     },
     {
       "id": "SCENARIO-20",
-      "description": "Mutual fund index fund redemption payout delay",
+      "description": "Hard Edge Case: Mutual fund redemption delay mentioning bank statement and bank branch confirmation",
       "expected_routing": "assign_to_entity",
-      "actual_routing": "assign_to_entity",
+      "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
-        "hallucination_rate": 0.0,
-        "correct": 1.0
+        "groundedness": 0.09,
+        "context_relevance": 0.2475,
+        "faithfulness": 0.2,
+        "hallucination_rate": 1.0,
+        "correct": 0.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-20",
+        "total_prompt_tokens": 2116,
+        "total_completion_tokens": 371,
+        "total_tokens": 2487,
+        "total_cost_usd": 0.00054,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 1993,
+            "completion_tokens": 24,
+            "cost_usd": 0.00031335
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 123,
+            "completion_tokens": 347,
+            "cost_usd": 0.00022665
+          }
+        ]
       }
     },
     {
@@ -274,12 +826,77 @@
       "description": "Unregistered algorithmic trading software subscription scam",
       "expected_routing": "escalate_to_human",
       "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
       "metrics": {
-        "groundedness": 1.0,
-        "context_relevance": 1.0,
-        "faithfulness": 1.0,
+        "groundedness": 0.712,
+        "context_relevance": 0.44,
+        "faithfulness": 0.8565,
         "hallucination_rate": 0.0,
         "correct": 1.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-21",
+        "total_prompt_tokens": 1634,
+        "total_completion_tokens": 356,
+        "total_tokens": 1990,
+        "total_cost_usd": 0.000459,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 1511,
+            "completion_tokens": 23,
+            "cost_usd": 0.00024045
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 123,
+            "completion_tokens": 333,
+            "cost_usd": 0.00021825
+          }
+        ]
+      }
+    },
+    {
+      "id": "SCENARIO-22",
+      "description": "Hard Edge Case: Bancassurance / third-party bank RM mis-selling of mutual fund lock-in scheme vs AMC redemption rejection",
+      "expected_routing": "assign_to_entity",
+      "actual_routing": "escalate_to_human",
+      "prompt_version": "modifier_aware_multipass:v2",
+      "retrieved_chunk_count": 5,
+      "verified_citation_count": 0,
+      "metrics": {
+        "groundedness": 0.11,
+        "context_relevance": 0.2475,
+        "faithfulness": 0.2,
+        "hallucination_rate": 1.0,
+        "correct": 0.0
+      },
+      "cost": {
+        "run_id": "v2_modifier_aware-SCENARIO-22",
+        "total_prompt_tokens": 2201,
+        "total_completion_tokens": 374,
+        "total_tokens": 2575,
+        "total_cost_usd": 0.000555,
+        "steps": [
+          {
+            "agent": "investigator",
+            "action": "product_entity_hypothesis",
+            "prompt_tokens": 2078,
+            "completion_tokens": 24,
+            "cost_usd": 0.0003261
+          },
+          {
+            "agent": "verifier",
+            "action": "audit_handoff",
+            "prompt_tokens": 123,
+            "completion_tokens": 350,
+            "cost_usd": 0.00022845
+          }
+        ]
       }
     }
   ]

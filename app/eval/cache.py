@@ -41,6 +41,11 @@ class QueryCache:
         duration = ttl or self.default_ttl
         self._cache[key] = CacheEntry(value=value, expires_at=time.time() + duration)
 
+    def clear(self):
+        self._cache.clear()
+        self.hits = 0
+        self.misses = 0
+
     def stats(self) -> Dict[str, Any]:
         total = self.hits + self.misses
         hit_rate = (self.hits / total) if total > 0 else 0.0

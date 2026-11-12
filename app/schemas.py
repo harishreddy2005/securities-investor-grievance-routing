@@ -1,4 +1,4 @@
-﻿from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -101,3 +101,17 @@ class JobStatus(StrictModel):
     run_id: str
     status: str
     error: str | None = None
+
+
+class FeedbackSubmission(StrictModel):
+    run_id: str = Field(min_length=1, max_length=128)
+    satisfactory: bool
+    reason: str = Field(min_length=3, max_length=1000)
+    corrected_routing: Literal["refer_to_other_regulator", "assign_to_entity", "escalate_to_human"] | None = None
+
+
+class FeedbackReceipt(StrictModel):
+    run_id: str
+    recorded: bool
+    automated_quality_score: float
+    total_feedback_count: int
