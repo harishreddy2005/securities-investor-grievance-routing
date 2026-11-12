@@ -4,11 +4,31 @@ x-app: &app
   environment:
     TELEMETRY_ENABLED: ${TELEMETRY_ENABLED:-true}
     OTLP_ENDPOINT: ${OTLP_ENDPOINT:-http://jaeger:4318/v1/traces}
+  logging:
+    driver: json-file
+    options:
+      max-size: '10m'
+      max-file: '3'
   volumes:
     - index-data:/data/index
     - model-cache:/home/router/.cache
 
 services:
+  loadtest:
+    profiles: [loadtest]
+    build:
+      context: .
+      dockerfile: deploy/loadtest/Dockerfile
+    user: '${LOADTEST_UID:-1000}:${LOADTEST_GID:-1000}'
+    environment:
+      BENCHMARK_RESULT: /results/${BENCHMARK_NAME:-manual}.json
+      BENCHMARK_USERS: ${BENCHMARK_USERS:-1}
+      BENCHMARK_WORKERS: ${BENCHMARK_WORKERS:-1}
+      BENCHMARK_TIMEOUT: ${BENCHMARK_TIMEOUT:-180}
+    volumes:
+      - ./data/phase4:/results
+    command: [--headless, --host, 'http://api:8000', --users, '1', --spawn-rate, '1', --run-time, 120s, --stop-timeout, '210', --csv, /results/manual]
+
   cadvisor:
     image: ghcr.io/google/cadvisor:0.55.1
     command: [--docker_only=true, --housekeeping_interval=5s, --store_container_labels=false]

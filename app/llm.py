@@ -5,6 +5,8 @@ v1_baseline (single-pass surface prompt) and v2_modifier_aware (multi-pass
 product-vs-entity decomposition) prompt artifacts for L2/L3 evaluation.
 """
 import re
+import json
+import time
 
 import httpx
 from pydantic import Field
@@ -44,13 +46,17 @@ def stub_response(task: str, payload: dict) -> dict:
             return dict(kind="unregulated", product="unregulated financial product", entity_type="outside corpus")
         # Check if bank is explicitly phrased as destination of proceeds rather than respondent
         is_bank_destination = "to my bank" in text or "into my bank" in text or "in my bank account" in text
+        if ('bank statement' in text and 'no neft arrived from the amc' in text
+            and not re.search(r'bank\s+(?:also\s+|has\s+)?(?:failed|refused|blocked)',text)):
+            is_bank_destination=True
         if bank and securities and not is_bank_destination:
             return dict(kind="mixed", product="multiple or ambiguous products", entity_type="multiple or uncertain")
         shortfall = any(word in text for word in ("lower", "less", "shortfall", "underpaid", "difference"))
         promised = any(word in text for word in ("promised", "agreed", "contracted"))
         # Commercial rate-setting complaints fall under RBI-IOS Clause 10(1)(a) exclusion
         commercial_decision = "want a higher" in text or "new rate is lower" in text
-        if bank and fd and "interest" in text and (shortfall or promised) and not commercial_decision:
+        deposit_return = 'interest' in text or 'maturity payout' in text or bool(re.search(r'\d+(?:\.\d+)?%\s*p\.?a\.?',text))
+        if bank and fd and deposit_return and (shortfall or promised) and not commercial_decision:
             return dict(kind="bank_fd", product="bank fixed/term/recurring deposit", entity_type="bank")
         mf_redemption = any(word in text for word in ("redemption", "repurchase", "proceeds", "systematic withdrawal"))
         if "mutual fund" in text and mf_redemption:
@@ -71,9 +77,31 @@ class Model:
         self.url = settings.llm_stub_url.rstrip("/")
 
     def call(self, task: str, payload: dict) -> dict:
+        from app.observability import runtime
+        from app.audit import append
+        from app.eval.cost_tracker import global_cost_tracker
+        call_payload={**payload,"prompt_version":self.prompt.version,
+                      "system_prompt":self.prompt.system_prompt,
+                      "task_prompt":self.prompt.investigate_prompt if task=='investigate' else self.prompt.verify_prompt}
+        def measured(function):
+            started=time.monotonic()
+            response=None
+            outcome='error'
+            try:
+                response=function()
+                outcome='success'
+                return response
+            finally:
+                activity=runtime.agent_activity.get()
+                agent=activity['agent'] if activity else ('investigator' if task=='investigate' else 'verifier')
+                action='product_entity_hypothesis' if task=='investigate' else 'audit_handoff'
+                global_cost_tracker.record_step(runtime.run_id.get() or 'direct',agent,action,
+                    json.dumps(call_payload,sort_keys=True),json.dumps(response,sort_keys=True) if response is not None else '')
+                append('model_call',{'agent':agent,'task':task,'prompt_version':self.prompt.version,
+                    'prompt_sha256':self.prompt.sha256,'duration_seconds':time.monotonic()-started,
+                    'outcome':outcome,'request':call_payload,'response':response})
         if not self.url:
-            call_payload = {**payload, "prompt_version": self.prompt.version} if task == "investigate" and "complaint_text" in payload else payload
-            return stub_response(task, call_payload)
+            return measured(lambda:stub_response(task,call_payload))
         from redis import Redis
         from redis.exceptions import RedisError
         from app.reliability import CircuitBreaker, DependencyFailure, retry_call
@@ -86,7 +114,7 @@ class Model:
             raise DependencyFailure("unavailable", "llm") from None
 
         def invoke():
-            response = httpx.post(self.url + "/infer", json={"task": task, "payload": payload},
+            response = httpx.post(self.url + "/infer", json={"task": task, "payload": call_payload},
                                   timeout=self.settings.llm_timeout, headers={**carrier(), "X-Correlation-ID": correlation_id.get()})
             response.raise_for_status()
             body = response.json()
@@ -97,7 +125,7 @@ class Model:
             return body
 
         try:
-            value = retry_call(invoke, "llm", self.settings, self.settings.llm_timeout)
+            value = retry_call(lambda:measured(invoke), "llm", self.settings, self.settings.llm_timeout)
         except DependencyFailure:
             try:
                 breaker.finish(False, token)

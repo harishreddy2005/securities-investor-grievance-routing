@@ -15,7 +15,7 @@ jobs:
         run: python scripts/local_e2e.py
   compose:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env
@@ -28,8 +28,28 @@ jobs:
         run: docker compose run --rm --no-deps ingest
       - name: Monitoring end-to-end verification
         run: python scripts/verify_phase2.py
+      - name: Guardrail audit cost and quality integration
+        run: python scripts/verify_completion.py
+      - name: Redis registration expiry recovers without restart
+        run: python scripts/verify_worker_recovery.py
       - name: Controlled dependency failure and recovery
         run: python scripts/failure_test_phase2.py
+      - name: Build containerized Locust
+        run: docker compose --profile loadtest build loadtest
+      - name: Accepted load-test job survives client cancellation
+        run: |
+          docker compose --profile loadtest run --rm --no-deps -T -e BENCHMARK_FORCE_CANCEL_ONCE=1 -e BENCHMARK_RESULT=/results/drain-regression.json loadtest --headless --host http://api:8000 --users 1 --spawn-rate 1 --run-time 5s --stop-timeout 210
+          python -c "import json; d=json.load(open('data/phase4/drain-regression.json')); assert d['successful']==1 and d['failed']==d['unfinished']==0 and d['samples'][0]['drained_after_stop']"
+      - name: Phase 4 functional smoke at one and three workers
+        # Short CI smoke verifies plumbing, not performance on shared runners.
+        run: python scripts/run_scale_benchmark.py --duration 10 --users 1 --workers 1 3
+      - name: Save Phase 4 synthetic benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4-smoke
+          path: data/phase4/
+          if-no-files-found: ignore
       - name: Show logs
         if: always()
         run: docker compose ps -a && docker compose logs --no-color --tail=200

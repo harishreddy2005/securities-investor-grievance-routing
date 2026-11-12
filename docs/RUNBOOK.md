@@ -1,4 +1,4 @@
-# Application and Phase 2 runbook
+# Application reliability and benchmark runbook
 
 Run commands in the repository root. See README for first startup.
 
@@ -149,3 +149,73 @@ previous key identifies a completed escalation or failed job.
 cannot forcibly cancel native work in a daemon thread. RQ's overall job timeout
 is the final process boundary. `TELEMETRY_EXPORT_TIMEOUT` bounds export attempts;
 traces are best effort. No production authentication is implemented on the API.
+
+## Phase 4 load test and scaling reproduction
+
+The target was declared before measurements in PHASE4_SLO.md: complete-run
+p95 <=8 seconds at normal load. Run synthetic complaints only, while the stack
+is idle. The load generator runs inside Compose; the host script only controls
+Docker and collects monitoring evidence. No load Python packages are needed on
+the host. First build the optional profile:
+
+```bash
+python scripts/configure_local.py
+docker compose up --build -d --wait --wait-timeout 900
+docker compose --profile loadtest build loadtest
+python scripts/run_scale_benchmark.py --duration 120 --users 1 3 6 --workers 1 3
+```
+
+The runner checks readiness and real semantic embeddings, waits for queued and
+started work to drain, excludes a warmup, and measures each case with Locust.
+The model stub is fixed at 0.1 seconds/call. Cases use unique idempotency keys.
+All final reference results must retain RBI authority, bank-first advice, exact
+evidence metadata and both agents. Successful POST requests alone are not results.
+
+The custom Locust `GRIEVANCE / complete` metric covers POST, queue wait, worker
+execution, status polling, result retrieval and validation. Aggregate HTTP RPS
+also counts polling, so it is not complaint throughput. Exact percentiles and
+drain-inclusive completed-complaint RPS are in `data/phase4/benchmark.json` and
+`benchmark.md`. Per-case CSV, samples, logs and resource snapshots are retained
+there; all are ignored runtime data. `--fail-on-slo` exits 2 after the full matrix
+if a target is missed. Failed/unfinished lifecycle samples fail the runner even
+without that option. A missed SLO must remain visible in the report.
+
+For a short plumbing check use `--duration 10 --users 1 --workers 1 3`.
+This is not a credible tail-latency benchmark. Default full runs use 120 seconds
+per case and may need additional drain time. Choose longer runs and >=100 samples
+per case for stronger p95 evidence. Shared-host results vary across machines.
+
+## Queue saturation or worker lag
+
+Symptom: submission stays fast but results queue up; end-to-end p95 rises.
+Confirm `grievance_queue_depth`, worker throughput, agent latency and container
+CPU/memory in Grafana. Check worker health rather than judging only API latency:
+
+```bash
+docker compose ps -a
+docker compose logs --tail=100 worker redis
+docker compose up -d --scale worker=3 --wait --wait-timeout 180
+```
+
+Allow existing work to finish; do not resubmit the same accepted complaint with
+fresh keys, flush Redis or delete volumes to make a graph look better. Additional
+workers help only if worker concurrency is the bottleneck. RQ SpawnWorker
+reinitializes Python/Chroma/embedding resources in each job process; that overhead
+may remain even with more workers. Inspect measured CPU, queue wait and per-agent
+times before recommending a performance change. Preserve the original benchmark
+when evaluating a proposed improvement.
+
+The runner restores one worker and original stub configuration in `finally`.
+If the host or Docker is interrupted, first stop only a leftover container whose
+name begins `grievance-load-` from this benchmark, allow queued work to drain,
+then restore the normal service count without deleting volumes:
+
+```bash
+docker compose up -d --scale worker=1 --wait --wait-timeout 900
+docker compose exec -T api python scripts/smoke_test.py
+```
+
+Workers use a unique incarnation suffix in their Redis registration. Readiness
+matches the container hostname and a recent heartbeat. This avoids a restored
+Redis AOF registration colliding with the next worker process after host restart.
+Do not remove Redis worker keys belonging to a live replica.

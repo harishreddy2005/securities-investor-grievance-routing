@@ -2,7 +2,9 @@
 import logging
 
 from rq import SpawnWorker
+from app.worker_registration import ReliableSpawnWorker
 from socket import gethostname
+from uuid import uuid4
 
 from app.jobs import connection, queue, resources
 from app.config import get_settings
@@ -14,4 +16,7 @@ if __name__ == "__main__":
     resources()  # Fail startup explicitly if index or model configuration is invalid.
     conn = connection()
     # Idle dequeue/heartbeat must remain shorter than readiness's 120s window.
-    SpawnWorker([queue(conn)], connection=conn, name=gethostname(), worker_ttl=60, log_job_description=False).work()
+    # Redis AOF can restore a prior registration after a host/VM interruption.
+    # A new process must not collide with that earlier incarnation.
+    name=gethostname()+":"+uuid4().hex[:12]
+    ReliableSpawnWorker([queue(conn)], connection=conn, name=name, worker_ttl=60, log_job_description=False).work()

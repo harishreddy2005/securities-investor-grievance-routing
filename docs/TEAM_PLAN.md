@@ -2,6 +2,10 @@
 
 Shareable summary for the team. Full detail: `docs/agent_handoff/IMPLEMENTATION_PLAN.md`. Day-by-day status: `docs/agent_handoff/PROGRESS_LOG.md`.
 
+**Current integrated status (12 November):** use [COMPLETION_STATUS.md](COMPLETION_STATUS.md)
+for verification of phases 0–4 and limits. Docker now runs on this device. Older
+dated progress sections below are preserved as history, not current blockers.
+
 ## 1. What we're building
 A multi-agent service that takes an investor complaint, validates it, works out **which regulator and which entity** is responsible from real regulations, and routes it with **citations**. It never decides the complaint; a grievance officer does.
 
@@ -9,11 +13,11 @@ A multi-agent service that takes an investor complaint, validates it, works out 
 
 > ⚠️ If `docker compose up` doesn't start and serve a valid request at the demo, the project gets **zero marks**. Everything below is ordered around that.
 
-## 2. Who does what (no Docker on Harish's laptop)
+## 2. Team workflow
 
 | Step | Where | Who |
 |---|---|---|
-| Write code, run Python unit tests (venv, no Docker) | Harish's laptop | Harish + AI agent |
+| Write code, run Python and Docker checks | Harish's laptop | Harish + AI agent |
 | Push to GitHub (`main` or feature branches) | GitHub | Harish |
 | `git pull` → `docker compose up --build` → run checks below → send back output | **Teammate's machine (has Docker)** | Teammate |
 | Fix anything reported, push again | Harish's laptop | Harish + AI agent |
@@ -28,17 +32,19 @@ One-time setup: install Docker Desktop and give it **≥ 6 GB RAM** (Settings �
 ```bash
 git pull
 cp .env.example .env          # first time only; default LLM_PROVIDER=stub needs no API key
-docker compose up --build -d
-docker compose ps             # every service should be "healthy"
-docker compose run --rm ingest          # builds the vector index (first run downloads the embedding model)
-python scripts/smoke_test.py            # or: open http://localhost:8000 and click the demo buttons
+python scripts/configure_local.py       # generate private Grafana credentials
+docker compose up --build -d --wait --wait-timeout 900
+docker compose ps -a          # nine healthy services; ingest Exited (0)
+docker compose exec -T api python scripts/smoke_test.py
+python scripts/verify_completion.py
+python scripts/verify_phase2.py
 docker compose logs --tail=200 > logs.txt
 ```
 Send back: the output of `docker compose ps`, the smoke-test output, and `logs.txt` if anything failed.
 
 URLs once running: App/UI `:8000` · API docs `:8000/docs` · Grafana `:3000` · Prometheus `:9090` · Jaeger `:16686`.
 
-## 4. Architecture (7 services under Docker Compose)
+## 4. Architecture (nine long-running services plus one-shot ingestion)
 
 | Service | Role |
 |---|---|
@@ -46,6 +52,7 @@ URLs once running: App/UI `:8000` · API docs `:8000/docs` · Grafana `:3000` ·
 | `worker` (scalable ×3) | Two LangGraph agents + tools + Chroma vector index |
 | `redis` | Job queue, run state, cache, rate-limit counters |
 | `llm-stub` | Fake LLM with realistic delay and failure switch (load tests, circuit-breaker demo) |
+| `worker-metrics`, `ingest` | Redis-backed worker metrics exporter; one-shot corpus indexing |
 | `prometheus`, `grafana`, `jaeger` (+ `cadvisor`) | Metrics, dashboards, traces, per-container resources |
 
 **Agents:** Agent 1 = investigator (searches the corpus, checks for provisions that *modify* the first answer, searches again). Agent 2 = verifier and router (every citation must match retrieved text; otherwise retry or escalate to a human).
@@ -110,3 +117,47 @@ then `docker compose up --build -d --wait --wait-timeout 900`. Grafana credentia
 come from local `.env`. Worker scaling remains configurable; Phase 4 load/scaling
 measurement has not started. Teammate Phase 1/3 code is preserved, not recertified
 in full by this update. Phase 2 changes remain uncommitted and unpushed.
+
+## Current phase status and Phase 4 completion (2026-11-11)
+
+Phase 0 and Phase 2 are published; Phase 2 commit is `6e64c31`. Phase 4 is now
+implemented and measured locally: real Docker Locust matrix, 120 seconds per case,
+one/three workers and one/three/six concurrent clients. All 295 synthetic reference
+complaints completed with verified RBI bank-first results; none failed or remained
+unfinished. Normal-load p95 passed: 3.827s at 1 worker/1 client and 6.011s at
+3 workers/3 clients. First tested SLO misses: 3 clients with one worker, 6 clients
+with three workers. At 3 clients scaling improved completed throughput 1.90x and
+reduced p95 42.5%. See PHASE4_REPORT.md for the full table, bottleneck and limits.
+
+Host and rebuilt Python 3.11 Docker suites each passed 67 tests. A stale RQ
+registration encountered after Docker resumed was fixed using worker incarnation
+names and heartbeat-scoped readiness. The benchmark restored one worker and all
+original data volumes. No Phase 4 commit/push has been performed.
+
+Phase 1 and Phase 3 contain teammate work, but runtime inspection found incomplete
+integration. Do not mark all five phases finished: see PROJECT_AUDIT.md for
+all-field/output guardrails, planned verification re-search, actual v1/v2 prompt
+comparison, cost/cache/rate-limit/feedback integration and faculty handout fixes.
+Remote `origin/main` has two newer documentation-only commits (`b5ce9f6` tip),
+which have been inspected but not merged over the local Phase 4 working tree.
+
+## Integrated phases 0–4 verified locally (2026-11-12)
+
+Supersedes the dated incomplete-integration notes above. Local main now includes
+teammate commit 736d95d plus preserved Phase 4 work and reviewed fixes. All-field
+guardrails, version parity, bounded evidence re-search, durable actual-call
+accounting/audits, shared Redis cache and independent quality/feedback reporting
+are wired into the worker path. Host and Python 3.11 Docker suites each pass 87
+tests; actual Redis smoke/integration, failure/recovery, registry repair and Edge
+browser checks pass. Seven Prometheus targets are UP and all 30 Grafana panels
+return real data; a single Jaeger trace crosses the full queue/agent path.
+
+Combined-build capacity measurements validate 348 reference complaints across
+one/three workers and 1/3/6/12 clients, with no failed/unfinished work in the final
+table. Normal-load p95 is 3.120s (1/1), 3.194s (3/3); the unchanged 8s target is
+missed at 1/6 and 3/12. Default-quota 429 failures are separately retained. Deployed
+cache comparison reduced p95 from 5.049s to 3.288s; billed stub cost remains zero.
+Evaluation v2 is 21/22 with one deliberately conservative mixed-case escalation.
+See COMPLETION_STATUS.md for complete evidence and limits. Phases 0–4 are ready
+for the scoped local demo; current changes are not committed/pushed and remote
+Actions have not been rerun. No named volume or regulatory PDF was changed.

@@ -44,6 +44,7 @@ def event(name, **fields):
 def initialize(service, settings):
     global _provider, _pid
     handler = logging.StreamHandler()
+    handler.setLevel(logging.INFO)
     handler.setFormatter(SafeJSONFormatter())
     root = logging.getLogger()
     root.handlers = [handler]

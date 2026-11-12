@@ -1,5 +1,6 @@
 import hashlib
 import time
+import json
 from typing import Any, Optional, Dict
 from pydantic import BaseModel
 
@@ -25,6 +26,13 @@ class QueryCache:
 
     def get(self, prefix: str, raw_key: str) -> Optional[Any]:
         key = self._hash_key(prefix, raw_key)
+        from app.observability.runtime import metric_store
+        from app.observability.metrics import count
+        backend=metric_store.get()
+        if backend is not None:
+            cached=backend.get('grievance:cache:'+key)
+            count('cache','hit' if cached is not None else 'miss',backend)
+            return json.loads(cached) if cached is not None else None
         entry = self._cache.get(key)
         if not entry:
             self.misses += 1
@@ -39,6 +47,11 @@ class QueryCache:
     def set(self, prefix: str, raw_key: str, value: Any, ttl: Optional[int] = None):
         key = self._hash_key(prefix, raw_key)
         duration = ttl or self.default_ttl
+        from app.observability.runtime import metric_store
+        backend=metric_store.get()
+        if backend is not None:
+            backend.set('grievance:cache:'+key,json.dumps(value),ex=duration)
+            return
         self._cache[key] = CacheEntry(value=value, expires_at=time.time() + duration)
 
     def clear(self):

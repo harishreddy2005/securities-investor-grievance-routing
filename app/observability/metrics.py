@@ -61,6 +61,7 @@ class WorkerCollector:
                 ("circuit_transitions", "Circuit transitions", ["state"], ["CLOSED","OPEN","HALF_OPEN"]),
                 ("agent", "Agent calls", ["agent","outcome"], [f"{a}:{o}" for a in ["investigator","verifier"] for o in ["success","error"]]),
                 ("agent_retries", "Per-agent dependency retries", ["agent","dependency"], [f"{a}:{d}" for a in ["investigator","verifier"] for d in ["llm","retrieval"]]),
+                ('cache','Shared retrieval cache operations',['outcome'],['hit','miss']),
             ]:
                 family = CounterMetricFamily("grievance_"+metric, help_text, labels=labels)
                 data = decoded(conn.hgetall(PREFIX+metric))
@@ -86,6 +87,24 @@ class WorkerCollector:
             for name in ["CLOSED","OPEN","HALF_OPEN"]:
                 family.add_metric(["llm",name], int(state==name))
             yield family
+            from pathlib import Path
+            from app.config import get_settings
+            manifest_path=get_settings().index_dir/'manifest.json'
+            if manifest_path.exists():
+                from datetime import datetime
+                manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+                for name,help_text,value in [
+                    ('grievance_index_built_timestamp_seconds','Corpus publication time',datetime.fromisoformat(manifest['built_at']).timestamp()),
+                    ('grievance_index_chunks','Indexed chunks',manifest['chunks']),
+                    ('grievance_ingestion_chunks_per_second','Last full ingestion throughput',manifest['chunks_per_second'])]:
+                    item=GaugeMetricFamily(name,help_text)
+                    item.add_metric([],float(value))
+                    yield item
+            recent=[json.loads(v) for v in conn.lrange('grievance:quality:recent',0,99)]
+            quality=GaugeMetricFamily('grievance_quality_score','Recent independent mechanical quality proxies',labels=['metric'])
+            for metric in ['groundedness','context_relevance','faithfulness','hallucination_rate']:
+                quality.add_metric([metric],sum(r.get(metric,0) for r in recent)/len(recent) if recent else 0)
+            yield quality
             ready.add_metric([],1)
             yield ready
         except Exception:

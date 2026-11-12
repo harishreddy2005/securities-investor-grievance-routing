@@ -1,8 +1,8 @@
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
 
-# Standard public pricing benchmark (e.g. Gemini 2.5 Flash / lightweight chat per 1M tokens)
-# Free/local tiers are used at runtime, and L5 requires tracking token & cost attribution per step and per 100 runs.
+# Illustrative accounting rates only, not a current provider price quote.
+# Runtime uses a local stub; billed API cost is zero.
 COST_PER_MILLION_PROMPT = 0.15      # $0.15 per 1M prompt tokens
 COST_PER_MILLION_COMPLETION = 0.60  # $0.60 per 1M completion tokens
 
@@ -13,6 +13,8 @@ class StepCostRecord(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     cost_usd: float
+    accounting: str = "character_estimate_not_billed_usage"
+    billed_cost_usd: float = 0.0
 
 
 class RunCostSummary(BaseModel):
@@ -34,7 +36,7 @@ class CostTracker:
     def record_step(self, run_id: str, agent: str, action: str, prompt_text: str, completion_text: str) -> StepCostRecord:
         # Approximate BPE token count (~4 chars per token)
         prompt_tokens = max(1, len(prompt_text) // 4)
-        completion_tokens = max(1, len(completion_text) // 4)
+        completion_tokens = max(1, len(completion_text) // 4) if completion_text else 0
         cost_usd = (prompt_tokens * COST_PER_MILLION_PROMPT / 1e6) + (completion_tokens * COST_PER_MILLION_COMPLETION / 1e6)
 
         record = StepCostRecord(
@@ -47,6 +49,8 @@ class CostTracker:
         if run_id not in self._records:
             self._records[run_id] = []
         self._records[run_id].append(record)
+        from app.audit import append
+        append('model_cost',record.model_dump())
         return record
 
     def get_run_summary(self, run_id: str) -> Optional[RunCostSummary]:

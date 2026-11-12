@@ -1,9 +1,15 @@
 ﻿# Securities Investor Grievance Routing
 
-An evidence-grounded grievance routing application with Phase 2 reliability and monitoring:
+An evidence-grounded grievance routing application with reliability, evaluation and monitoring:
 PDF ingestion → persistent semantic index → Redis/RQ queue → two LangGraph agents
 → verified result → web interface. It recommends a route for a grievance officer
 to review; it never decides a complaint or contacts a regulator. Use synthetic data.
+
+See [COMPLETION_STATUS.md](docs/COMPLETION_STATUS.md) for the integrated build's
+current verification results and known limits. It supersedes older phase
+snapshots. The build adds all-field/output guardrails, bounded verification
+re-search, durable model-call audit/accounting, shared Redis retrieval caching
+and independent live quality/feedback checks.
 
 ## Run with Docker Compose
 
@@ -79,7 +85,7 @@ escalate to a human.
 | `ingest` | One-shot PDF parsing, exact clause anchors, embedding and indexing |
 | `worker-metrics` | Redis-backed metrics aggregated across worker processes and replicas |
 | `prometheus` | Seven monitored scrape targets; persistent seven-day metrics |
-| `grafana` | Automatically provisioned datasource and 26-panel dashboard |
+| `grafana` | Automatically provisioned datasource and 30-panel dashboard |
 | `jaeger` | OTLP HTTP trace collection, query UI and persistent trace storage |
 | `cadvisor` | Container CPU, memory and uptime; internal port 8080 |
 
@@ -90,7 +96,8 @@ The explicit graph handoff contains request, product/entity hypothesis, retrieve
 citations, and tool events. The independent verifier node audits required provision
 coverage and every citation's exact text and metadata against the persistent index.
 Missing or inconsistent evidence produces an uncertain human escalation. Each run
-has at most two agent nodes, 12 investigator tool calls, a graph recursion limit,
+has two distinct agent roles, at most two investigation/verification attempts,
+12 investigator tool calls per attempt, a graph recursion limit of eight,
 configurable dependency deadlines and an RQ wall-clock timeout. Phase 2 adds
 bounded transient retries, exponential backoff with jitter, and a Redis-shared
 LLM circuit breaker. Dependency failures produce an uncertain human escalation
@@ -146,7 +153,7 @@ python -m venv .venv
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
 
-# Optional local HTTP harness without Docker (TCP fakeredis, not real Redis)
+# Optional local HTTP harness without Docker (in-memory fakeredis, not real Redis)
 python scripts/local_e2e.py
 
 # Optional real-browser form regressions against the running app
@@ -172,7 +179,7 @@ shortfall and mutual fund redemption reference cases and escalates other cases.
 It is a test/demo model substitute, not a general language model. Real provider
 adapters and broader product understanding remain limitations. Teammate Phase 1
 and Phase 3 work is preserved; Phase 2 adds resilience and observability. Phase 4
-load testing and scaling measurements remain pending under the latest
+load testing and scaling measurements are documented below under the latest
 [team plan](docs/TEAM_PLAN.md). The older implementation-plan phase numbering is
 superseded by that team plan. No production authentication is provided.
 
@@ -225,3 +232,66 @@ timeouts, Redis 503 responses and collector independence. Run it while idle; it
 temporarily recreates workers and the model stub and stops Redis and Jaeger.
 See [runbook](docs/RUNBOOK.md) for manual recovery and troubleshooting. No Locust
 benchmark or three-worker throughput result is claimed by these Phase 2 checks.
+
+## Phase 4 load and scaling tests
+
+The predeclared target is **complete-run p95 <=8 seconds**, documented in
+[PHASE4_SLO.md](docs/PHASE4_SLO.md). Locust measures submission through final
+result retrieval/validation using synthetic bank FD complaints, the HTTP model
+stub, real Redis and semantic retrieval. It checks RBI authority and bank-first
+advice for every successful reference run.
+
+With the normal stack already running:
+
+```bash
+docker compose --profile loadtest build loadtest
+python scripts/run_scale_benchmark.py --duration 120 --users 1 3 6 --workers 1 3
+```
+
+Allow several minutes per worker group. The runner scales workers, excludes a
+warmup, drains existing work between cases, collects Locust/Prometheus evidence,
+and restores one worker and original stub settings. It retains all existing
+volumes. Run while idle and do not submit unrelated complaints during measurement.
+Linux bind-mount UID/GID are set automatically by the runner.
+
+Results and raw samples/CSV/logs are in ignored `data/phase4/`. Use the custom
+`GRIEVANCE / complete` metric for end-to-end latency; aggregate HTTP RPS includes
+polling and is not complaint throughput. `--fail-on-slo` returns exit 2 after the
+matrix if a target is missed. The generator is a single Locust process; this
+summary implementation does not support distributed Locust or `--processes`.
+
+See [Phase 4 report](docs/PHASE4_REPORT.md) for measured results and limitations,
+the [runbook](docs/RUNBOOK.md) for queue saturation/recovery, and
+[current completion status](docs/COMPLETION_STATUS.md) for the integrated fixes
+and remaining scope limits. The repository audit is a historical pre-fix snapshot.
+
+## Integrated audit, feedback and quality checks
+
+```bash
+python scripts/verify_completion.py
+# Controlled metadata-expiry regression; run on an idle stack.
+python scripts/verify_worker_recovery.py
+```
+
+Results include actual-call character-based token/cost estimates and independent
+mechanical quality metrics. The stub has zero billed API cost. Internal durable
+audit events are at `/api/v1/grievances/{run_id}/trace`; summaries are at
+`/api/v1/costs/summary` and `/api/v1/quality/summary`. Feedback requires a completed
+run and is separate from the automated score. See DATA_CONTRACT.md. Internal
+audit responses can include synthetic request text, unlike exported telemetry.
+
+For deployed cache measurements, compare identical loads on an idle stack:
+
+```bash
+python scripts/run_scale_benchmark.py --duration 60 --users 3 --workers 3 --cache-mode off --report-name cache-off
+python scripts/run_scale_benchmark.py --duration 60 --users 3 --workers 3 --cache-mode on --report-name cache-on
+```
+
+Output includes exact full-lifecycle p95, throughput and estimated/billed cost.
+Capacity/cache runs temporarily use a benchmark-only 10000/minute API quota so
+the production client limit does not mask workers. Base API settings are restored
+afterward. Pass `--api-rate-limit 60` to reproduce the default-quota experiment;
+429 rejections are retained as failures rather than hidden from the SLO.
+A query-cache speedup does not imply token or API-charge savings. The offline
+evaluation's suite-total timing is not an end-to-end p95. Latest measured
+results are in COMPLETION_STATUS.md; old audit snapshots remain as history.

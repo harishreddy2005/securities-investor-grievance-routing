@@ -1,5 +1,59 @@
 # Development incidents
 
+## 2026-11-12 — Completion review recovery and test-fixture defects
+
+The local API returned 503 while Redis had heartbeat-only worker hashes without
+queue metadata. RQ's default heartbeat recreated only last_heartbeat after expiry.
+ReliableSpawnWorker now repairs queue/identity metadata on heartbeat; worker
+readiness checks the metadata too. Removing queues from an idle real worker's
+hash reproduced the defect, then recovered without restart or deleting state.
+
+The local HTTP CI harness was also reproduced on Python 3.11/Linux. Fakeredis's
+TCP decoder raised ValueError and IndexError while handling binary RQ frames,
+causing HTTP 503. Replaced only the simulator with a shared in-memory FakeServer.
+The HTTP API/stub still run over real sockets; Compose separately tests real
+Redis. Host and Linux harnesses then passed all four scenarios. This does not
+represent the simulator as equivalent to the production Redis/SpawnWorker test.
+
+Docker Desktop could not restart after a full-disk incident; its log explicitly
+reported failure writing init.log. Space was available when completion resumed;
+a non-destructive Desktop restart restored the engine and existing volumes.
+Application container logs now rotate, and the benchmark checks disk headroom.
+No named volume, regulatory index, user data or unrelated cache was deleted.
+
+The integrated load test correctly encountered the default per-IP 60/minute
+submission quota (HTTP 429). Preserved all failed samples in production-quota.json
+and separated worker-capacity experiments with a declared benchmark-only 10000
+quota; base settings are restored. The eight-second target remains unchanged.
+
+One accepted workload was cancelled by a Locust stopping greenlet before its
+result was collected. The failed sample remains in the original artifacts. The
+collector now retains accepted IDs and drains them at stop without resubmission,
+using the original timer/deadline; targeted timing/timeout tests verify this.
+Controlled Docker cancellation recovered exactly one accepted complaint, with
+zero failed/unfinished jobs. The same 60-second affected case then passed all
+32 complaints; p95 13.929s still correctly misses the unchanged 8s stress target.
+Original evidence is retained as worker-capacity-before-drain-fix; the retest and
+consolidated report explicitly record which case was replaced. Full host and
+Python 3.11 container suites pass 87 tests each. The current controlled failure
+suite also passes provider timeout/error, circuit recovery, Redis outage/restore
+and Jaeger independence, with normal settings and all volumes retained.
+
+## 2026-11-11 — Stale RQ registration after Docker Desktop resumed
+
+Docker Desktop was initially stopped. Starting its per-user installation restored
+the existing containers and Redis AOF. The worker repeatedly exited with
+`ValueError: There exists an active worker named ... already`; Redis showed a
+registration with a heartbeat from 2026-11-03. Compose correctly refused readiness.
+No queue, worker keys, indexed corpus or Docker volumes were deleted.
+
+The worker now registers a unique incarnation suffix after its container hostname.
+Its health check accepts only a matching container's recent heartbeat and rejects
+stale/other-replica registrations. A focused test verifies those conditions.
+The complete host suite passed 67 tests after the fix. Rebuilding/recreating the
+application containers applies it; Phase 4's scaling and post-benchmark restart
+checks provide the real-Docker recovery evidence recorded in PHASE4_REPORT.md.
+
 ## 2026-11-03 — Phase 2 test discovery and circuit timing
 
 Pytest initially discovered a historical checkout in ignored `data/audit-c248225`

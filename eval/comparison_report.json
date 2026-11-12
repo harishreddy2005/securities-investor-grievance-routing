@@ -9,54 +9,54 @@
     "correct_routing_accuracy": 0.5455
   },
   "after_v2_modifier_aware": {
-    "groundedness": 0.7368,
-    "context_relevance": 0.6068,
-    "faithfulness": 0.7997,
-    "hallucination_rate": 0.1753,
+    "groundedness": 0.8091,
+    "context_relevance": 0.6626,
+    "faithfulness": 0.8646,
+    "hallucination_rate": 0.0909,
     "total_evaluated": 22,
-    "correct_routing_accuracy": 0.8636
+    "correct_routing_accuracy": 0.9545
   },
   "deltas": {
-    "correct_routing_accuracy": 0.3181,
-    "groundedness": 0.2959,
-    "context_relevance": 0.2223,
-    "faithfulness": 0.2362,
-    "hallucination_rate": -0.3117
+    "correct_routing_accuracy": 0.409,
+    "groundedness": 0.3682,
+    "context_relevance": 0.2781,
+    "faithfulness": 0.3011,
+    "hallucination_rate": -0.3961
   },
   "cost_attribution_v2": {
     "total_runs": 22,
-    "avg_prompt_tokens": 3053.8,
-    "avg_completion_tokens": 958.6,
-    "avg_total_tokens": 4012.5,
-    "cost_per_100_runs_usd": 0.1033,
+    "avg_prompt_tokens": 485.7,
+    "avg_completion_tokens": 25.0,
+    "avg_total_tokens": 510.7,
+    "cost_per_100_runs_usd": 0.0088,
     "largest_cost_driver": {
-      "step": "verifier:audit_handoff",
-      "share_of_total_cost_pct": 60.5,
-      "avg_prompt_tokens": 420.6,
-      "avg_completion_tokens": 937.3
+      "step": "investigator:product_entity_hypothesis",
+      "share_of_total_cost_pct": 77.1,
+      "avg_prompt_tokens": 362.0,
+      "avg_completion_tokens": 22.5
     },
     "step_breakdown": {
       "investigator:product_entity_hypothesis": {
-        "avg_prompt_tokens": 2633.2,
-        "avg_completion_tokens": 21.4,
-        "cost_per_100_runs_usd": 0.0408
+        "avg_prompt_tokens": 362.0,
+        "avg_completion_tokens": 22.5,
+        "cost_per_100_runs_usd": 0.0068
       },
       "verifier:audit_handoff": {
-        "avg_prompt_tokens": 420.6,
-        "avg_completion_tokens": 937.3,
-        "cost_per_100_runs_usd": 0.0625
+        "avg_prompt_tokens": 123.8,
+        "avg_completion_tokens": 2.5,
+        "cost_per_100_runs_usd": 0.002
       }
     }
   },
   "caching_effect_d7": {
-    "cold_suite_latency_ms": 2475.43,
-    "warm_suite_latency_ms": 311.49,
-    "latency_reduction_pct": 87.4,
+    "cold_suite_latency_ms": 2826.12,
+    "warm_suite_latency_ms": 612.58,
+    "latency_reduction_pct": 78.3,
     "warm_cache_stats": {
       "cached_entries": 33,
-      "hits": 167,
+      "hits": 193,
       "misses": 33,
-      "hit_rate": 0.835
+      "hit_rate": 0.854
     }
   }
 }

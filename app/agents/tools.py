@@ -1,5 +1,8 @@
 from langchain_core.tools import tool
 from app.observability.runtime import record_tool
+from app.audit import append
+from app.observability.runtime import span
+import time
 
 
 def make_tools(retriever, request, events):
@@ -17,18 +20,28 @@ def make_tools(retriever, request, events):
     def inspect_request_fields() -> dict:
         """Read validated product, entity and prior-complaint fields."""
         record("inspect_request_fields", "Read complaint and prior approach details")
-        return request.model_dump(mode="json")
+        with span('tool.inspect_request_fields'):
+            append('tool',{'action':'inspect_request_fields','fields':list(type(request).model_fields)})
+            return request.model_dump(mode="json")
 
     @tool
     def search_regulatory_corpus(query: str, document_id: str = "") -> list[dict]:
         """Search active regulatory passages semantically, optionally within a document."""
         record("search_regulatory_corpus", query)
-        return [c.model_dump() for c in retriever.search(query, document_id or None)]
+        started=time.monotonic()
+        with span('tool.search_regulatory_corpus'):
+            result=[c.model_dump() for c in retriever.search(query, document_id or None)]
+            append('tool',{'action':'search_regulatory_corpus','query':query,'document_id':document_id,'passages':result,'duration_seconds':time.monotonic()-started})
+            return result
 
     @tool
     def lookup_clause(document_id: str, section: str) -> list[dict]:
         """Retrieve an exact reviewed section, retaining PDF provenance."""
         record("lookup_clause", document_id + " section " + section)
-        return [c.model_dump() for c in retriever.lookup(document_id, section)]
+        started=time.monotonic()
+        with span('tool.lookup_clause'):
+            result=[c.model_dump() for c in retriever.lookup(document_id, section)]
+            append('tool',{'action':'lookup_clause','document_id':document_id,'section':section,'passages':result,'duration_seconds':time.monotonic()-started})
+            return result
 
     return inspect_request_fields, search_regulatory_corpus, lookup_clause

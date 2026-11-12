@@ -7,7 +7,7 @@ from langgraph.graph import END, START, StateGraph
 
 from app.agents.tools import make_tools
 from app.eval.cost_tracker import global_cost_tracker
-from app.guardrails.safety import inspect_input_text, inspect_output_decision
+from app.guardrails.safety import inspect_input_text, inspect_output_decision, inspect_fields, inspect_result
 from app.llm import Hypothesis, Model
 from app.observability.runtime import instrument_agent, run_id as runtime_run_id
 from app.prompts.loader import load_prompt
@@ -29,6 +29,8 @@ class AgentState(TypedDict, total=False):
     result: dict
     run_id: str
     guardrail_error: str
+    attempts: int
+    retry_needed: bool
 
 
 def escalate(reason, trace, product="not established", entity_type="not established", prompt_version="phase0-v1"):
@@ -79,10 +81,11 @@ def build_graph(retriever, model):
     def investigator(state: AgentState):
         request = GrievanceSubmission.model_validate(state["request"])
         active_run_id = state.get("run_id") or runtime_run_id.get() or str(uuid4())
-        trace = []
+        attempts=state.get('attempts',0)+1
+        trace = list(state.get('trace',[]))
 
         # L4 Defense-in-depth input guardrail inside agent workflow
-        is_safe, guardrail_reason = inspect_input_text(request.complaint_text)
+        is_safe, guardrail_reason, _ = inspect_fields(request.model_dump(mode='json'))
         if not is_safe:
             trace.append(dict(agent="investigator", action="input_guardrail_blocked", detail=guardrail_reason))
             return dict(
@@ -98,6 +101,9 @@ def build_graph(retriever, model):
         evidence = search.invoke({"query": request.complaint_text})
         hypothesis = Hypothesis.model_validate(model.call("investigate", fields))
         trace.append(dict(agent="investigator", action="product_entity_hypothesis", detail=hypothesis.model_dump_json()))
+        if attempts>1:
+            evidence += search.invoke({'query':'jurisdiction statutory exclusions maintainability written complaint '+hypothesis.product})
+            trace.append(dict(agent='investigator',action='verification_research',detail='Broadened jurisdiction and maintainability search after rejected evidence'))
 
         if prompt_artifact.version == "v1":
             # v1_baseline: Single-pass retrieval without Para 5.3 modifier check or second-pass search
@@ -120,25 +126,10 @@ def build_graph(retriever, model):
         dedup_evidence = list({c["chunk_id"]: c for c in evidence}.values())
 
         # L5 Token and cost attribution for Investigator step
-        formatted_inv_prompt = (
-            f"{prompt_artifact.system_prompt}\n\n"
-            + prompt_artifact.investigate_prompt.format(
-                complaint_text=request.complaint_text,
-                entity_name=request.entity_name,
-                named_regulator=request.named_regulator,
-            )
-            + "\n\nRetrieved Passages:\n"
-            + json.dumps([{"doc": c["document_id"], "sec": c["section"], "quote": c["quote"]} for c in dedup_evidence])
-        )
-        global_cost_tracker.record_step(
-            run_id=active_run_id,
-            agent="investigator",
-            action="product_entity_hypothesis",
-            prompt_text=formatted_inv_prompt,
-            completion_text=hypothesis.model_dump_json(),
-        )
 
-        return dict(run_id=active_run_id, hypothesis=hypothesis.model_dump(), evidence=dedup_evidence, trace=trace)
+        from app.audit import append
+        append('handoff',{'attempt':attempts,'hypothesis':hypothesis.model_dump(),'evidence':dedup_evidence})
+        return dict(run_id=active_run_id, attempts=attempts, retry_needed=False, hypothesis=hypothesis.model_dump(), evidence=dedup_evidence, trace=trace)
 
     def verifier(state: AgentState):
         active_run_id = state.get("run_id") or runtime_run_id.get() or str(uuid4())
@@ -158,13 +149,6 @@ def build_graph(retriever, model):
             else:
                 reason = "The regulatory corpus and model cannot establish this product and routing with sufficient evidence."
             esc = escalate(reason, trace, hypothesis.product, hypothesis.entity_type, prompt_version=p_ver)
-            global_cost_tracker.record_step(
-                run_id=active_run_id,
-                agent="verifier",
-                action="audit_handoff",
-                prompt_text=f"{prompt_artifact.verify_prompt}\nHypothesis: {hypothesis.model_dump_json()}",
-                completion_text=esc.model_dump_json(),
-            )
             return {"result": esc.model_dump(mode="json")}
 
         citations = [Citation.model_validate(c) for c in state["evidence"]]
@@ -173,14 +157,10 @@ def build_graph(retriever, model):
         valid = all(key in by_section for key in required) and all(retriever.verify(c) for c in citations)
         verification = model.call("verify", {"evidence_valid": valid, "kind": hypothesis.kind})
         if not valid or verification.get("supported") is not True:
+            if state.get('attempts',1)<2:
+                trace.append(dict(agent='verifier',action='evidence_rejected',detail='Bounded re-search required before any recommendation'))
+                return {'retry_needed':True,'trace':trace}
             esc = escalate("Evidence verification failed or a required provision was not retrieved.", trace, prompt_version=p_ver)
-            global_cost_tracker.record_step(
-                run_id=active_run_id,
-                agent="verifier",
-                action="audit_handoff",
-                prompt_text=f"{prompt_artifact.verify_prompt}\nEvidence valid: {valid}",
-                completion_text=esc.model_dump_json(),
-            )
             return {"result": esc.model_dump(mode="json")}
 
         citations = [by_section[key] for key in required]
@@ -191,7 +171,7 @@ def build_graph(retriever, model):
                 target_authority="Reserve Bank of India — Integrated Ombudsman Scheme, 2021",
                 immediate_action=action, eligibility=eligibility, product=hypothesis.product,
                 entity_type=hypothesis.entity_type,
-                rationale="The product is inferred from the complaint to be a bank fixed deposit. The bank is a Regulated Entity under RBI-IOS 3(1)(j). Crediting less than the promised interest is treated as an alleged deficiency in service under 3(1)(f) and clause 9. SCORES 5.3 excludes RBI matters. Clause 10(1)(a)'s commercial-judgment exclusion was considered: this complaint concerns failure to honour a promised rate, rather than setting a rate. The Scheme does not name fixed deposits or interest explicitly. Coverage of the particular bank and all maintainability conditions require confirmation.",
+                rationale="The product is inferred from the complaint to be a bank fixed deposit. The bank is a Regulated Entity under RBI-IOS 3(1)(j). Crediting less than the promised contractual return is treated as an alleged deficiency in service under 3(1)(f) and clause 9. SCORES 5.3 excludes RBI matters. Clause 10(1)(a)'s commercial-judgment exclusion was considered: this complaint concerns failure to honour a promised rate, rather than setting a rate. The Scheme does not name fixed deposits or interest explicitly. Coverage of the particular bank and all maintainability conditions require confirmation.",
                 regulatory_citations=citations,
                 next_steps=[action, "Keep the FD confirmation, promised rate, interest calculations and the bank's reply.",
                     "RBI-IOS 10(2)(a) normally requires filing within one year of the reply, or one year and 30 days from the written complaint if no reply arrives. A grievance officer must check remaining maintainability conditions."],
@@ -213,35 +193,43 @@ def build_graph(retriever, model):
             esc = escalate(out_reason, trace, hypothesis.product, hypothesis.entity_type, prompt_version=p_ver)
             return {"result": esc.model_dump(mode="json")}
 
-        # L5 Token and cost attribution for Verifier step
-        verify_prompt_text = (
-            f"{prompt_artifact.system_prompt}\n\n{prompt_artifact.verify_prompt}\n\n"
-            + json.dumps([{"doc": c.document_id, "sec": c.section, "quote": c.quote} for c in citations])
-        )
-        global_cost_tracker.record_step(
-            run_id=active_run_id,
-            agent="verifier",
-            action="audit_handoff",
-            prompt_text=verify_prompt_text,
-            completion_text=decision.model_dump_json(),
-        )
         return {"result": decision.model_dump(mode="json")}
+
+    def finalize(state):
+        from app.audit import append
+        from app.eval.live import evaluate
+        result=state['result']
+        safe, reason=inspect_result(result)
+        if not safe:
+            result=escalate('Generated output requires human review: '+reason,state.get('trace',[]),prompt_version=p_ver).model_dump(mode='json')
+        identifier=state.get('run_id') or runtime_run_id.get()
+        summary=global_cost_tracker.get_run_summary(identifier)
+        result['cost_summary']=summary.model_dump() if summary else None
+        result['quality_metrics']=evaluate(result,state.get('evidence',[]),state['request'])
+        append('verification',{'result':result,'attempts':state.get('attempts',1)})
+        return {'result':result}
 
     graph = StateGraph(AgentState)
     graph.add_node("investigator", instrument_agent(investigator,"investigator"))
     graph.add_node("verifier", instrument_agent(verifier,"verifier"))
+    graph.add_node('finalize',finalize)
     graph.add_edge(START, "investigator")
     graph.add_edge("investigator", "verifier")
-    graph.add_edge("verifier", END)
+    graph.add_conditional_edges('verifier',lambda state:'investigator' if state.get('retry_needed') else 'finalize')
+    graph.add_edge('finalize', END)
     return graph.compile()
 
 
 def route_with_state(request: GrievanceSubmission, retriever, settings, run_id: str | None = None) -> tuple[RoutingDecision, list[dict]]:
     rid = run_id or str(uuid4())
-    state = build_graph(retriever, Model(settings)).invoke(
-        {"request": request.model_dump(mode="json"), "run_id": rid},
-        {"recursion_limit": 6},
-    )
+    token=runtime_run_id.set(rid)
+    try:
+        state = build_graph(retriever, Model(settings)).invoke(
+            {"request": request.model_dump(mode="json"), "run_id": rid},
+            {"recursion_limit": 8},
+        )
+    finally:
+        runtime_run_id.reset(token)
     return RoutingDecision.model_validate(state["result"]), state.get("evidence", [])
 
 

@@ -107,3 +107,52 @@ submission or polling returns controlled 503 rather than a model result.
 `GET /metrics` exposes stable API route/status/method aggregates. Worker aggregate
 metrics are internal at `worker-metrics:9101/metrics`. Complaint fields, job IDs,
 trace IDs and arbitrary URLs are never metric labels.
+
+## Integrated audit, accounting, feedback and quality
+
+All string leaves in the submission (including complainant fields, entity name,
+identifiers and reference strings) undergo guardrail inspection before any model
+call. Unsafe submissions return 400 and are quarantined. Generated user-facing
+text is screened for unauthorized determinations and toxicity; verbatim reviewed
+regulatory quotes remain unchanged. Evidence rejection permits one bounded
+re-search before escalation. The workflow has at most five agent/finalization
+node executions and at most 12 investigator tools per attempt, two attempts.
+
+Results add nullable `cost_summary` and `quality_metrics`. Cost records count the
+actual model request/validated response JSON characters divided by four, labelled
+`character_estimate_not_billed_usage`; they are not provider tokenizer counts or
+an API invoice. Each local stub record has `billed_cost_usd=0`. Attempt records,
+including failed calls, persist in Redis under the run ID for RESULT_TTL.
+
+`GET /api/v1/grievances/{run_id}/trace` returns durable internal audit events:
+model task/version/hash, request/response, durations, trace IDs, tool queries and
+passages, handoff and verification. This local synthetic-data audit can contain
+the submitted text. It is separate from exported OTLP spans, which omit complaint
+content and credentials. There is no production authentication; use synthetic
+data only. Unknown runs return 404; unavailable Redis returns 503.
+
+`POST /api/v1/feedback` accepts `{run_id, satisfactory, reason,
+corrected_routing?}`. A completed durable outcome is required: unknown/expired
+runs return 404, pending/failed runs without a completed outcome return 409.
+Unsafe reasons return 400. Valid feedback returns 201. Caller satisfaction does
+not change the independent automated quality score. `GET /api/v1/feedback/summary`
+returns satisfaction counters and recent scores; no side effect contacts a regulator.
+
+`GET /api/v1/quality/summary` returns the most recent 100 live-run quality samples
+and their means. `method=mechanical_provenance_and_policy_proxy` checks exact
+citation equality against retrieved evidence, required-clause coverage and
+bank-first policy. It does not prove semantic entailment or correctness on
+unknown products. Dependency failures use `unscored_dependency_failure` with
+zero coverage/faithfulness. These live checks need no caller rating or golden
+label. Up to 1,000 recent samples are retained; per-run records have RESULT_TTL.
+
+`GET /api/v1/costs/summary` reports recent-run estimated cost per 100 runs, zero
+stub billed cost, per-step totals and largest estimated driver. Models' estimates
+and audit records are durably recorded in job processes; they survive process exit.
+
+Submission rate limiting is a Redis-atomic fixed-minute counter per direct client
+IP, configured by RATE_LIMIT_PER_MINUTE (default 60). Exceeding it returns 429.
+Reverse-proxy client identity and production authentication are outside this demo.
+The Redis retrieval cache uses corpus fingerprint, provider, scope and query keys;
+new corpus versions cannot reuse old entries. Cache TTL defaults to one hour.
+ENABLE_QUERY_CACHE=false disables it; idempotency remains a separate contract.

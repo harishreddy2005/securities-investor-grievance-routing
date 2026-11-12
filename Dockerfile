@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ ./app/
 COPY corpus/raw/ ./corpus/raw/
+COPY eval/ ./eval/
 COPY scripts/ ./scripts/
 RUN useradd --create-home router && mkdir -p /data/index /home/router/.cache && chown -R router:router /app /data /home/router/.cache
 USER router

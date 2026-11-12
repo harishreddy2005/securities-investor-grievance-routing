@@ -1,6 +1,6 @@
 """Developer-only HTTP smoke harness when Docker is unavailable.
 
-Uses fakeredis's TCP server and RQ SimpleWorker, not the production Redis daemon
+Uses fakeredis's shared in-memory server and RQ SimpleWorker, not the production Redis daemon
 or process-isolated Docker worker. Installs require requirements-dev.txt.
 """
 import concurrent.futures
@@ -12,6 +12,9 @@ import socket
 import sys
 import threading
 import time
+from unittest.mock import patch
+from uuid import uuid4
+from redis import Redis
 
 # Also permit invoking this script directly from the repository root.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -20,6 +23,7 @@ import fakeredis
 import uvicorn
 from rq import SimpleWorker
 from rq.timeouts import TimerDeathPenalty
+from app.worker_registration import RegistrationMixin
 
 from scripts.smoke_test import run
 from scripts.smoke_test import request as smoke_request
@@ -31,27 +35,28 @@ def free_port():
         return sock.getsockname()[1]
 
 
-class LocalWorker(SimpleWorker):
+class LocalWorker(RegistrationMixin,SimpleWorker):
     death_penalty_class = TimerDeathPenalty
 
 
 def main(semantic=False):
-    redis_server = fakeredis.TcpFakeServer(("127.0.0.1", 0), server_type="redis")
-    redis_server.daemon_threads = True
-    redis_server.block_on_close = False
-    redis_thread = threading.Thread(target=redis_server.serve_forever, daemon=True)
-    redis_thread.start()
+    redis_server = fakeredis.FakeServer()
+    # The TCP emulator can desynchronize binary RQ frames under concurrency.
+    # Keep only this simulator in memory; the Compose job tests actual Redis.
+    redis_patch=patch.object(Redis,'from_url',side_effect=lambda *a,**k:fakeredis.FakeRedis(server=redis_server))
+    redis_patch.start()
     api_port, stub_port = free_port(), free_port()
     servers = []
     # Keep the development index under ignored data/: Windows retains native
     # vector-index file handles until process exit, so in-process deletion fails.
     index_path = "data/local-e2e-semantic" if semantic else "data/local-e2e"
     with nullcontext(str(Path(index_path).resolve())) as directory:
-        os.environ.update(REDIS_URL=f"redis://127.0.0.1:{redis_server.server_address[1]}/0",
+        os.environ.update(REDIS_URL="redis://localhost:6379/0",QUEUE_NAME='local-e2e-'+uuid4().hex,
                           INDEX_DIR=directory, CORPUS_DIR="corpus/raw",
                           EMBEDDING_PROVIDER="chroma" if semantic else "test_hash", LLM_PROVIDER="stub",
                           EMBEDDING_CACHE_DIR="data/models",
                           ANONYMIZED_TELEMETRY="False",
+                          TELEMETRY_ENABLED="false",
                           LLM_STUB_URL=f"http://127.0.0.1:{stub_port}", STUB_FAIL="false")
         from app.config import get_settings
         from app.jobs import connection, queue
@@ -83,14 +88,20 @@ def main(semantic=False):
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(ready_then_smoke)
                 worker.work(burst=False, max_jobs=4, max_idle_time=15, logging_level="WARNING")
-                future.result(timeout=60)
-            print(f"Local HTTP e2e passed ({'semantic' if semantic else 'test'} embeddings + TCP fakeredis + SimpleWorker).")
+                try:
+                    future.result(timeout=60)
+                except Exception:
+                    from rq.registry import StartedJobRegistry, FailedJobRegistry
+                    from rq.job import Job
+                    print({'queued':queue(conn).count,'started':StartedJobRegistry(queue(conn).name,connection=conn).count,
+                           'failed':FailedJobRegistry(queue(conn).name,connection=conn).count},flush=True)
+                    raise
+            print(f"Local HTTP e2e passed ({'semantic' if semantic else 'test'} embeddings + in-memory fakeredis + SimpleWorker).")
         finally:
             for server, thread in servers:
                 server.should_exit = True
                 thread.join(timeout=5)
-            redis_server.shutdown()
-            redis_server.server_close()
+            redis_patch.stop()
 
 
 if __name__ == "__main__":

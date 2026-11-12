@@ -12,7 +12,7 @@ from rq.exceptions import NoSuchJobError
 from rq.job import Job
 
 from app.config import get_settings
-from app.guardrails.safety import inspect_input_text
+from app.guardrails.safety import inspect_input_text, inspect_fields
 from app.jobs import connection, process_grievance, queue, worker_available, enqueue, IdempotencyConflict
 from app.observability.http import install
 from app.observability import runtime
@@ -70,18 +70,19 @@ def submit(request: Request, submission: GrievanceSubmission, conn=Depends(redis
     client_ip = request.client.host if request.client else "anonymous"
     rl_key = f"grievance:ratelimit:{client_ip}:{int(time.time() // 60)}"
     try:
-        current_count = conn.incr(rl_key)
-        if current_count == 1:
-            conn.expire(rl_key, 60)
+        with conn.pipeline() as rate_pipe:
+            rate_pipe.incr(rl_key)
+            rate_pipe.expire(rl_key,60)
+            current_count,_=rate_pipe.execute()
         if current_count > get_settings().rate_limit_per_minute:
             raise HTTPException(status_code=429, detail="Rate limit exceeded; retry after 60 seconds")
     except RedisError:
         raise HTTPException(503, "Queue unavailable; retry later") from None
 
     # L4 Guardrail check on free-text complaint field
-    is_safe, guardrail_msg = inspect_input_text(submission.complaint_text)
+    is_safe, guardrail_msg, field = inspect_fields(submission.model_dump(mode="json"))
     if not is_safe:
-        err = [{"loc": ["body", "complaint_text"], "type": "guardrail_violation", "msg": guardrail_msg}]
+        err = [{"loc": field.split('.'), "type": "guardrail_violation", "msg": guardrail_msg}]
         try:
             conn.lpush("grievance:quarantine", json.dumps({"errors": err, "body": submission.model_dump(mode="json")}, default=str))
             conn.ltrim("grievance:quarantine", 0, 999)
@@ -146,17 +147,14 @@ def submit_feedback(feedback: FeedbackSubmission, conn=Depends(redis_connection)
 
     try:
         stored_raw = conn.get(f"grievance:outcome:{feedback.run_id}")
-        quality_score = 0.75 if feedback.satisfactory else 0.25
-        if stored_raw:
-            outcome = json.loads(stored_raw)
-            has_verified_citations = bool(outcome.get("regulatory_citations"))
-            is_verified = outcome.get("reliability_status") == "verified"
-            base = 0.5 if feedback.satisfactory else 0.1
-            if is_verified:
-                base += 0.25
-            if has_verified_citations or outcome.get("routing") == "escalate_to_human":
-                base += 0.20
-            quality_score = round(min(1.0, base), 4)
+        if not stored_raw:
+            try:
+                Job.fetch(feedback.run_id,connection=conn)
+            except NoSuchJobError:
+                raise HTTPException(404,"Completed run not found") from None
+            raise HTTPException(409,"Feedback requires a completed run")
+        quality_raw=conn.get('grievance:quality:'+feedback.run_id)
+        quality_score=json.loads(quality_raw).get('groundedness',0.0) if quality_raw else 0.0
 
         entry = {
             "run_id": feedback.run_id,
@@ -178,6 +176,45 @@ def submit_feedback(feedback: FeedbackSubmission, conn=Depends(redis_connection)
         )
     except RedisError:
         raise HTTPException(503, "Feedback store unavailable") from None
+
+
+@app.get('/api/v1/grievances/{run_id}/trace')
+def run_audit(run_id: str, conn=Depends(redis_connection)):
+    find_job(run_id,conn)
+    from app.audit import records
+    try:
+        return {'run_id':run_id,'events':records(conn,run_id)}
+    except RedisError:
+        raise HTTPException(503,'Audit store unavailable') from None
+
+
+@app.get('/api/v1/quality/summary')
+def quality_summary(conn=Depends(redis_connection)):
+    try:
+        values=[json.loads(v) for v in conn.lrange('grievance:quality:recent',0,99)]
+        names=['groundedness','context_relevance','faithfulness','hallucination_rate']
+        return {'samples':len(values),'metrics':{k:sum(v.get(k,0) for v in values)/len(values) if values else 0 for k in names},'recent':values[:20]}
+    except RedisError:
+        raise HTTPException(503,'Quality store unavailable') from None
+
+
+@app.get('/api/v1/costs/summary')
+def cost_summary(conn=Depends(redis_connection)):
+    try:
+        values=[json.loads(v) for v in conn.lrange('grievance:cost:recent',0,99)]
+        by_step={}
+        for value in values:
+            for step in value['steps']:
+                name=step['agent']+':'+step['action']
+                by_step[name]=by_step.get(name,0)+step['cost_usd']
+        total=sum(v['total_cost_usd'] for v in values)
+        return {'runs':len(values),'accounting':'character_estimate_not_billed_usage',
+                'estimated_cost_per_100_runs_usd':total/len(values)*100 if values else 0,
+                'billed_cost_per_100_runs_usd':0,
+                'largest_estimated_cost_driver':max(by_step,key=by_step.get) if by_step else None,
+                'step_totals':by_step}
+    except RedisError:
+        raise HTTPException(503,'Cost store unavailable') from None
 
 
 @app.get("/api/v1/feedback/summary")

@@ -112,15 +112,38 @@ def process_grievance(payload: dict, run_id: str, telemetry=None):
             runtime.event("job_started")
             try:
                 request = GrievanceSubmission.model_validate(payload)
-                state = resources().invoke({"request": request.model_dump(mode="json")}, {"recursion_limit": 6})
+                state = resources().invoke({"request": request.model_dump(mode="json")}, {"recursion_limit": 8})
                 result = RoutingDecision.model_validate(state["result"]).model_dump(mode="json")
             except DependencyFailure as error:
                 result=escalate("A required dependency is unavailable; a grievance officer must review the complaint before routing.",
                     [{"agent":"verifier","action":"dependency_failure","detail":error.dependency+": "+error.code}]).model_dump(mode="json")
                 result.update(reliability_status="degraded",error_code=error.code)
+                result['quality_metrics']={'groundedness':0.0,'context_relevance':0.0,
+                    'faithfulness':0.0,'hallucination_rate':0.0,'method':'unscored_dependency_failure',
+                    'requires_human_review':True}
                 count("errors",error.code)
                 runtime.event("job_degraded",error_code=error.code)
+            from app.eval.cost_tracker import global_cost_tracker
+            costs=global_cost_tracker.get_run_summary(run_id)
+            if costs:
+                result['cost_summary']=costs.model_dump()
             with runtime.span("result.store"):
+                cost=result.get('cost_summary')
+                if cost:
+                    entry={'run_id':run_id,**cost}
+                    with conn.pipeline() as cost_pipe:
+                        cost_pipe.set('grievance:cost:'+run_id,json.dumps(entry),ex=settings.result_ttl)
+                        cost_pipe.lpush('grievance:cost:recent',json.dumps(entry))
+                        cost_pipe.ltrim('grievance:cost:recent',0,999)
+                        cost_pipe.execute()
+                quality=result.get('quality_metrics')
+                if quality:
+                    entry={**quality,'run_id':run_id,'timestamp':time.time()}
+                    with conn.pipeline() as quality_pipe:
+                        quality_pipe.set('grievance:quality:'+run_id,json.dumps(entry),ex=settings.result_ttl)
+                        quality_pipe.lpush('grievance:quality:recent',json.dumps(entry))
+                        quality_pipe.ltrim('grievance:quality:recent',0,999)
+                        quality_pipe.execute()
                 # Single durable application outcome, independent of repeated deliveries.
                 # Lock ownership and outcome publication are committed atomically.
                 with conn.pipeline() as pipe:
@@ -162,5 +185,5 @@ def process_grievance(payload: dict, run_id: str, telemetry=None):
 def worker_available(conn):
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc)
-    return any(w.last_heartbeat and (now-w.last_heartbeat).total_seconds() < 120
+    return any(w.last_heartbeat and 0 <= (now-w.last_heartbeat).total_seconds() < 120
                for w in Worker.all(connection=conn) if get_settings().queue_name in w.queue_names())

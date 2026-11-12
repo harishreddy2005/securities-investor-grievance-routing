@@ -67,7 +67,41 @@ def inspect_output_decision(rationale: str, immediate_action: str) -> Tuple[bool
     Returns (is_safe, failure_reason).
     """
     combined = f"{rationale} {immediate_action}"
+    if TOXIC_REGEX.search(combined):
+        return False, "Output contains unsafe or abusive instructions."
     if UNAUTHORIZED_OUTPUT_REGEX.search(combined):
         return False, "Output violated authority boundary: system cannot dispose complaints or award payouts directly."
 
     return True, ""
+
+
+def inspect_fields(value, path="body"):
+    """Inspect every string leaf, including nested names/references, before tools."""
+    if isinstance(value, str):
+        safe, reason = inspect_input_text(value)
+        if not safe:
+            return False, reason, path
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            safe, reason, field = inspect_fields(item, path+"."+str(key))
+            if not safe:
+                return safe, reason, field
+    elif isinstance(value, (list, tuple)):
+        for index, item in enumerate(value):
+            safe, reason, field = inspect_fields(item,path+"."+str(index))
+            if not safe:
+                return safe, reason, field
+    return True, "", path
+
+
+def inspect_result(value):
+    """Exclude verbatim regulatory passages; inspect all generated user-facing text."""
+    generated={k:v for k,v in value.items() if k not in {"regulatory_citations","agent_trace","cost_summary"}}
+    def strings(item):
+        if isinstance(item,str):
+            yield item
+        elif isinstance(item,dict):
+            for child in item.values(): yield from strings(child)
+        elif isinstance(item,list):
+            for child in item: yield from strings(child)
+    return inspect_output_decision(" ".join(strings(generated)),"")

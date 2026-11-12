@@ -88,6 +88,10 @@ def test_api_guardrails_rate_limit_and_feedback_loop(settings, retriever, refere
 
         # 3. L6 Feedback endpoint records caller satisfaction & computes automated quality score
         run_id = r1.json()["run_id"]
+        pending=client.post('/api/v1/feedback',json={'run_id':run_id,'satisfactory':True,'reason':'Synthetic pending review'})
+        assert pending.status_code==409
+        from rq import SimpleWorker
+        SimpleWorker([jobs.queue(conn)],connection=conn).work(burst=True)
         fb1 = client.post(
             "/api/v1/feedback",
             json={"run_id": run_id, "satisfactory": True, "reason": "Correctly identified RBI Ombudsman and 30-day rule."},
@@ -98,7 +102,7 @@ def test_api_guardrails_rate_limit_and_feedback_loop(settings, retriever, refere
 
         fb2 = client.post(
             "/api/v1/feedback",
-            json={"run_id": "run-unsat-1", "satisfactory": False, "reason": "Escalated instead of routing to AMC.", "corrected_routing": "assign_to_entity"},
+            json={"run_id": run_id, "satisfactory": False, "reason": "Escalated instead of routing to AMC.", "corrected_routing": "assign_to_entity"},
         )
         assert fb2.status_code == 201
 
@@ -109,6 +113,8 @@ def test_api_guardrails_rate_limit_and_feedback_loop(settings, retriever, refere
         assert body["satisfactory_count"] == 1
         assert body["unsatisfactory_count"] == 1
         assert body["satisfaction_rate"] == 0.5
-        assert 0.0 < body["avg_automated_quality_score"] < 1.0
+        assert body["avg_automated_quality_score"] == fb1.json()['automated_quality_score']
+        unknown=client.post('/api/v1/feedback',json={'run_id':'unknown','satisfactory':True,'reason':'Synthetic unknown review'})
+        assert unknown.status_code==404
 
     main.app.dependency_overrides.clear()

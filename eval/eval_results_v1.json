@@ -1,6 +1,6 @@
 {
   "prompt_version": "v1_baseline",
-  "elapsed_ms": 1596.25,
+  "elapsed_ms": 2798.17,
   "summary": {
     "groundedness": 0.4409,
     "context_relevance": 0.3845,
@@ -11,26 +11,26 @@
   },
   "cost_attribution": {
     "total_runs": 22,
-    "avg_prompt_tokens": 1999.5,
-    "avg_completion_tokens": 524.4,
-    "avg_total_tokens": 2523.8,
-    "cost_per_100_runs_usd": 0.0615,
+    "avg_prompt_tokens": 296.2,
+    "avg_completion_tokens": 21.2,
+    "avg_total_tokens": 317.4,
+    "cost_per_100_runs_usd": 0.0057,
     "largest_cost_driver": {
-      "step": "verifier:audit_handoff",
-      "share_of_total_cost_pct": 53.0,
-      "avg_prompt_tokens": 151.8,
-      "avg_completion_tokens": 505.1
+      "step": "investigator:product_entity_hypothesis",
+      "share_of_total_cost_pct": 92.8,
+      "avg_prompt_tokens": 272.4,
+      "avg_completion_tokens": 20.3
     },
     "step_breakdown": {
       "investigator:product_entity_hypothesis": {
-        "avg_prompt_tokens": 1847.6,
-        "avg_completion_tokens": 19.3,
-        "cost_per_100_runs_usd": 0.0289
+        "avg_prompt_tokens": 272.4,
+        "avg_completion_tokens": 20.3,
+        "cost_per_100_runs_usd": 0.0053
       },
       "verifier:audit_handoff": {
-        "avg_prompt_tokens": 151.8,
-        "avg_completion_tokens": 505.1,
-        "cost_per_100_runs_usd": 0.0326
+        "avg_prompt_tokens": 23.9,
+        "avg_completion_tokens": 0.9,
+        "cost_per_100_runs_usd": 0.0004
       }
     }
   },
@@ -58,24 +58,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-01",
-        "total_prompt_tokens": 1895,
-        "total_completion_tokens": 357,
-        "total_tokens": 2252,
-        "total_cost_usd": 0.000498,
+        "total_prompt_tokens": 271,
+        "total_completion_tokens": 23,
+        "total_tokens": 294,
+        "total_cost_usd": 5.4e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1845,
-            "completion_tokens": 22,
-            "cost_usd": 0.00028995
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 50,
-            "completion_tokens": 335,
-            "cost_usd": 0.0002085
+            "prompt_tokens": 271,
+            "completion_tokens": 23,
+            "cost_usd": 5.445e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -97,24 +92,28 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-02",
-        "total_prompt_tokens": 2706,
-        "total_completion_tokens": 1120,
-        "total_tokens": 3826,
-        "total_cost_usd": 0.001078,
+        "total_prompt_tokens": 377,
+        "total_completion_tokens": 24,
+        "total_tokens": 401,
+        "total_cost_usd": 7.1e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 2199,
-            "completion_tokens": 19,
-            "cost_usd": 0.00034125
+            "prompt_tokens": 272,
+            "completion_tokens": 20,
+            "cost_usd": 5.28e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           },
           {
             "agent": "verifier",
             "action": "audit_handoff",
-            "prompt_tokens": 507,
-            "completion_tokens": 1101,
-            "cost_usd": 0.00073665
+            "prompt_tokens": 105,
+            "completion_tokens": 4,
+            "cost_usd": 1.815e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -136,24 +135,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-03",
-        "total_prompt_tokens": 1738,
-        "total_completion_tokens": 349,
-        "total_tokens": 2087,
-        "total_cost_usd": 0.00047,
+        "total_prompt_tokens": 274,
+        "total_completion_tokens": 20,
+        "total_tokens": 294,
+        "total_cost_usd": 5.3e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1691,
-            "completion_tokens": 19,
-            "cost_usd": 0.00026505
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 330,
-            "cost_usd": 0.00020505
+            "prompt_tokens": 274,
+            "completion_tokens": 20,
+            "cost_usd": 5.31e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -175,24 +169,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-04",
-        "total_prompt_tokens": 1846,
-        "total_completion_tokens": 344,
-        "total_tokens": 2190,
-        "total_cost_usd": 0.000483,
+        "total_prompt_tokens": 269,
+        "total_completion_tokens": 20,
+        "total_tokens": 289,
+        "total_cost_usd": 5.2e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1799,
-            "completion_tokens": 19,
-            "cost_usd": 0.00028125
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 325,
-            "cost_usd": 0.00020205
+            "prompt_tokens": 269,
+            "completion_tokens": 20,
+            "cost_usd": 5.235e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -214,24 +203,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-05",
-        "total_prompt_tokens": 1667,
-        "total_completion_tokens": 341,
-        "total_tokens": 2008,
-        "total_cost_usd": 0.000455,
+        "total_prompt_tokens": 265,
+        "total_completion_tokens": 20,
+        "total_tokens": 285,
+        "total_cost_usd": 5.2e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1620,
-            "completion_tokens": 19,
-            "cost_usd": 0.0002544
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 322,
-            "cost_usd": 0.00020025
+            "prompt_tokens": 265,
+            "completion_tokens": 20,
+            "cost_usd": 5.175e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -253,24 +237,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-06",
-        "total_prompt_tokens": 1947,
-        "total_completion_tokens": 345,
-        "total_tokens": 2292,
-        "total_cost_usd": 0.000499,
+        "total_prompt_tokens": 270,
+        "total_completion_tokens": 20,
+        "total_tokens": 290,
+        "total_cost_usd": 5.3e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1900,
-            "completion_tokens": 19,
-            "cost_usd": 0.0002964
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 326,
-            "cost_usd": 0.00020265
+            "prompt_tokens": 270,
+            "completion_tokens": 20,
+            "cost_usd": 5.25e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -292,24 +271,28 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-07",
-        "total_prompt_tokens": 2904,
-        "total_completion_tokens": 1123,
-        "total_tokens": 4027,
-        "total_cost_usd": 0.001109,
+        "total_prompt_tokens": 376,
+        "total_completion_tokens": 24,
+        "total_tokens": 400,
+        "total_cost_usd": 7.1e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 2397,
-            "completion_tokens": 19,
-            "cost_usd": 0.00037095
+            "prompt_tokens": 271,
+            "completion_tokens": 20,
+            "cost_usd": 5.265e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           },
           {
             "agent": "verifier",
             "action": "audit_handoff",
-            "prompt_tokens": 507,
-            "completion_tokens": 1104,
-            "cost_usd": 0.00073845
+            "prompt_tokens": 105,
+            "completion_tokens": 4,
+            "cost_usd": 1.815e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -331,24 +314,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-08",
-        "total_prompt_tokens": 1672,
-        "total_completion_tokens": 346,
-        "total_tokens": 2018,
-        "total_cost_usd": 0.000458,
+        "total_prompt_tokens": 271,
+        "total_completion_tokens": 20,
+        "total_tokens": 291,
+        "total_cost_usd": 5.3e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1625,
-            "completion_tokens": 19,
-            "cost_usd": 0.00025515
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 327,
-            "cost_usd": 0.00020325
+            "prompt_tokens": 271,
+            "completion_tokens": 20,
+            "cost_usd": 5.265e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -370,24 +348,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-09",
-        "total_prompt_tokens": 1667,
-        "total_completion_tokens": 345,
-        "total_tokens": 2012,
-        "total_cost_usd": 0.000457,
+        "total_prompt_tokens": 270,
+        "total_completion_tokens": 20,
+        "total_tokens": 290,
+        "total_cost_usd": 5.3e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1620,
-            "completion_tokens": 19,
-            "cost_usd": 0.0002544
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 326,
-            "cost_usd": 0.00020265
+            "prompt_tokens": 270,
+            "completion_tokens": 20,
+            "cost_usd": 5.25e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -409,24 +382,28 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-10",
-        "total_prompt_tokens": 2567,
-        "total_completion_tokens": 1122,
-        "total_tokens": 3689,
-        "total_cost_usd": 0.001058,
+        "total_prompt_tokens": 378,
+        "total_completion_tokens": 24,
+        "total_tokens": 402,
+        "total_cost_usd": 7.1e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 2060,
-            "completion_tokens": 19,
-            "cost_usd": 0.0003204
+            "prompt_tokens": 273,
+            "completion_tokens": 20,
+            "cost_usd": 5.295e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           },
           {
             "agent": "verifier",
             "action": "audit_handoff",
-            "prompt_tokens": 507,
-            "completion_tokens": 1103,
-            "cost_usd": 0.00073785
+            "prompt_tokens": 105,
+            "completion_tokens": 4,
+            "cost_usd": 1.815e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -448,24 +425,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-11",
-        "total_prompt_tokens": 1945,
-        "total_completion_tokens": 353,
-        "total_tokens": 2298,
-        "total_cost_usd": 0.000504,
+        "total_prompt_tokens": 278,
+        "total_completion_tokens": 20,
+        "total_tokens": 298,
+        "total_cost_usd": 5.4e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1898,
-            "completion_tokens": 19,
-            "cost_usd": 0.0002961
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 334,
-            "cost_usd": 0.00020745
+            "prompt_tokens": 278,
+            "completion_tokens": 20,
+            "cost_usd": 5.37e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -487,24 +459,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-12",
-        "total_prompt_tokens": 1914,
-        "total_completion_tokens": 344,
-        "total_tokens": 2258,
-        "total_cost_usd": 0.000494,
+        "total_prompt_tokens": 269,
+        "total_completion_tokens": 20,
+        "total_tokens": 289,
+        "total_cost_usd": 5.2e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1867,
-            "completion_tokens": 19,
-            "cost_usd": 0.00029145
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 325,
-            "cost_usd": 0.00020205
+            "prompt_tokens": 269,
+            "completion_tokens": 20,
+            "cost_usd": 5.235e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -526,24 +493,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-13",
-        "total_prompt_tokens": 1753,
-        "total_completion_tokens": 341,
-        "total_tokens": 2094,
-        "total_cost_usd": 0.000468,
+        "total_prompt_tokens": 264,
+        "total_completion_tokens": 20,
+        "total_tokens": 284,
+        "total_cost_usd": 5.2e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1706,
-            "completion_tokens": 19,
-            "cost_usd": 0.0002673
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 322,
-            "cost_usd": 0.00020025
+            "prompt_tokens": 264,
+            "completion_tokens": 20,
+            "cost_usd": 5.16e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -565,24 +527,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-14",
-        "total_prompt_tokens": 1566,
-        "total_completion_tokens": 339,
-        "total_tokens": 1905,
-        "total_cost_usd": 0.000438,
+        "total_prompt_tokens": 264,
+        "total_completion_tokens": 20,
+        "total_tokens": 284,
+        "total_cost_usd": 5.2e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1519,
-            "completion_tokens": 19,
-            "cost_usd": 0.00023925
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 320,
-            "cost_usd": 0.00019905
+            "prompt_tokens": 264,
+            "completion_tokens": 20,
+            "cost_usd": 5.16e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -604,24 +561,28 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-15",
-        "total_prompt_tokens": 2460,
-        "total_completion_tokens": 1121,
-        "total_tokens": 3581,
-        "total_cost_usd": 0.001042,
+        "total_prompt_tokens": 377,
+        "total_completion_tokens": 24,
+        "total_tokens": 401,
+        "total_cost_usd": 7.1e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1953,
-            "completion_tokens": 19,
-            "cost_usd": 0.00030435
+            "prompt_tokens": 272,
+            "completion_tokens": 20,
+            "cost_usd": 5.28e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           },
           {
             "agent": "verifier",
             "action": "audit_handoff",
-            "prompt_tokens": 507,
-            "completion_tokens": 1102,
-            "cost_usd": 0.00073725
+            "prompt_tokens": 105,
+            "completion_tokens": 4,
+            "cost_usd": 1.815e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -643,24 +604,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-16",
-        "total_prompt_tokens": 1580,
-        "total_completion_tokens": 343,
-        "total_tokens": 1923,
-        "total_cost_usd": 0.000443,
+        "total_prompt_tokens": 267,
+        "total_completion_tokens": 20,
+        "total_tokens": 287,
+        "total_cost_usd": 5.2e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1533,
-            "completion_tokens": 19,
-            "cost_usd": 0.00024135
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 324,
-            "cost_usd": 0.00020145
+            "prompt_tokens": 267,
+            "completion_tokens": 20,
+            "cost_usd": 5.205e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -682,24 +638,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-17",
-        "total_prompt_tokens": 1941,
-        "total_completion_tokens": 340,
-        "total_tokens": 2281,
-        "total_cost_usd": 0.000495,
+        "total_prompt_tokens": 265,
+        "total_completion_tokens": 20,
+        "total_tokens": 285,
+        "total_cost_usd": 5.2e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1894,
-            "completion_tokens": 19,
-            "cost_usd": 0.0002955
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 321,
-            "cost_usd": 0.00019965
+            "prompt_tokens": 265,
+            "completion_tokens": 20,
+            "cost_usd": 5.175e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -721,24 +672,28 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-18",
-        "total_prompt_tokens": 2708,
-        "total_completion_tokens": 1122,
-        "total_tokens": 3830,
-        "total_cost_usd": 0.001079,
+        "total_prompt_tokens": 377,
+        "total_completion_tokens": 24,
+        "total_tokens": 401,
+        "total_cost_usd": 7.1e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 2201,
-            "completion_tokens": 19,
-            "cost_usd": 0.00034155
+            "prompt_tokens": 272,
+            "completion_tokens": 20,
+            "cost_usd": 5.28e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           },
           {
             "agent": "verifier",
             "action": "audit_handoff",
-            "prompt_tokens": 507,
-            "completion_tokens": 1103,
-            "cost_usd": 0.00073785
+            "prompt_tokens": 105,
+            "completion_tokens": 4,
+            "cost_usd": 1.815e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -760,24 +715,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-19",
-        "total_prompt_tokens": 2056,
-        "total_completion_tokens": 376,
-        "total_tokens": 2432,
-        "total_cost_usd": 0.000534,
+        "total_prompt_tokens": 290,
+        "total_completion_tokens": 23,
+        "total_tokens": 313,
+        "total_cost_usd": 5.7e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 2006,
-            "completion_tokens": 22,
-            "cost_usd": 0.0003141
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 50,
-            "completion_tokens": 354,
-            "cost_usd": 0.0002199
+            "prompt_tokens": 290,
+            "completion_tokens": 23,
+            "cost_usd": 5.73e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -799,24 +749,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-20",
-        "total_prompt_tokens": 1951,
-        "total_completion_tokens": 359,
-        "total_tokens": 2310,
-        "total_cost_usd": 0.000508,
+        "total_prompt_tokens": 285,
+        "total_completion_tokens": 20,
+        "total_tokens": 305,
+        "total_cost_usd": 5.5e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1904,
-            "completion_tokens": 19,
-            "cost_usd": 0.000297
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 340,
-            "cost_usd": 0.00021105
+            "prompt_tokens": 285,
+            "completion_tokens": 20,
+            "cost_usd": 5.475e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -838,24 +783,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-21",
-        "total_prompt_tokens": 1469,
-        "total_completion_tokens": 344,
-        "total_tokens": 1813,
-        "total_cost_usd": 0.000427,
+        "total_prompt_tokens": 270,
+        "total_completion_tokens": 20,
+        "total_tokens": 290,
+        "total_cost_usd": 5.3e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1422,
-            "completion_tokens": 19,
-            "cost_usd": 0.0002247
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 325,
-            "cost_usd": 0.00020205
+            "prompt_tokens": 270,
+            "completion_tokens": 20,
+            "cost_usd": 5.25e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }
@@ -877,24 +817,19 @@
       },
       "cost": {
         "run_id": "v1_baseline-SCENARIO-22",
-        "total_prompt_tokens": 2036,
-        "total_completion_tokens": 362,
-        "total_tokens": 2398,
-        "total_cost_usd": 0.000523,
+        "total_prompt_tokens": 290,
+        "total_completion_tokens": 20,
+        "total_tokens": 310,
+        "total_cost_usd": 5.6e-05,
         "steps": [
           {
             "agent": "investigator",
             "action": "product_entity_hypothesis",
-            "prompt_tokens": 1989,
-            "completion_tokens": 19,
-            "cost_usd": 0.00030975
-          },
-          {
-            "agent": "verifier",
-            "action": "audit_handoff",
-            "prompt_tokens": 47,
-            "completion_tokens": 343,
-            "cost_usd": 0.00021285
+            "prompt_tokens": 290,
+            "completion_tokens": 20,
+            "cost_usd": 5.55e-05,
+            "accounting": "character_estimate_not_billed_usage",
+            "billed_cost_usd": 0.0
           }
         ]
       }

@@ -37,7 +37,7 @@ class Retriever:
     def _search(self, query, document_id, limit):
         from app.eval.cache import global_query_cache
         cache_enabled = getattr(self.settings, "enable_query_cache", True)
-        cache_key = f"{self.settings.index_dir}:{self.manifest['embedding_provider']}:{document_id or '*'}:{limit}:{query}"
+        cache_key = f"{self.manifest['fingerprint']}:{self.manifest['embedding_provider']}:{document_id or '*'}:{limit}:{query}"
         if cache_enabled:
             cached = global_query_cache.get("search", cache_key)
             if cached is not None:
@@ -55,7 +55,7 @@ class Retriever:
     def _lookup(self, document_id, section):
         from app.eval.cache import global_query_cache
         cache_enabled = getattr(self.settings, "enable_query_cache", True)
-        cache_key = f"{self.settings.index_dir}:{self.manifest['embedding_provider']}:{document_id}:{section}"
+        cache_key = f"{self.manifest['fingerprint']}:{self.manifest['embedding_provider']}:{document_id}:{section}"
         if cache_enabled:
             cached = global_query_cache.get("lookup", cache_key)
             if cached is not None:
