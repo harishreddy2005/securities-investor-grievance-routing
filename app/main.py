@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from fastapi import Depends, FastAPI, HTTPException, Request, Header
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 from redis.exceptions import RedisError
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
@@ -33,9 +34,18 @@ def redis_connection():
     return connection()
 
 
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
 @app.get("/")
 def frontend():
-    return FileResponse(Path(__file__).parent / "static/index.html")
+    return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/result", include_in_schema=False)
+def result_page():
+    return FileResponse(STATIC_DIR / "result.html")
 
 
 @app.get("/health")

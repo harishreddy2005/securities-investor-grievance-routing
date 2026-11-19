@@ -3,89 +3,251 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Investor Grievance Router</title>
-  <style>
-    :root{font:16px/1.6 system-ui;color:#172b44;background:#f2f5f8}body{max-width:900px;margin:40px auto;padding:0 20px}h1{line-height:1.2}form,section{background:white;padding:24px;border-radius:12px;margin:20px 0;border:1px solid #dde3eb}label{display:block;margin:12px 0 4px;font-weight:600}input,textarea,select,button{font:inherit;box-sizing:border-box}input:not([type=checkbox]),textarea,select{width:100%;padding:10px;border:1px solid #9aabba;border-radius:5px}button{padding:10px 18px;margin:12px 8px 0 0;border:0;border-radius:6px;background:#164d77;color:white;cursor:pointer}button:disabled{opacity:.5}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f2f5f8;padding:14px;font:14px/1.6 system-ui}.note{color:#53657c}.error{color:#a02525}#status{min-height:2em}a{color:#164d77}
-  </style>
+  <meta name="description" content="Evidence-grounded multi-agent routing for securities investor grievances.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f97316'/%3E%3Cpath d='M9 22V10h8a4 4 0 010 8h-8m6 0l5 4' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <h1>Investor Grievance Router</h1>
-  <p class="note">Phase 0 · Synthetic complaints only · Routing advice for review by a grievance officer</p>
-  <button type="button" data-demo="fd">Bank FD example</button><button type="button" data-demo="mf">Mutual fund example</button><button type="button" data-demo="unknown">Insufficient evidence example</button>
-  <form id="complaint-form">
-    <label for="entity">Entity name</label><input id="entity" required maxlength="200" value="Example Bank Ltd">
-    <label for="complaint">Complaint</label><textarea id="complaint" required minlength="20" maxlength="5000" rows="5"></textarea>
-    <label><input type="checkbox" id="approached"> I already complained in writing to the entity</label>
-    <p class="note">Select the checkbox above to add dates and response details for an earlier complaint.</p>
-    <fieldset id="prior-details" disabled style="border:0;padding:0;margin:0">
-    <label for="prior-date">Date the entity received the complaint (if known)</label><input id="prior-date" type="date" min="1900-01-01">
-    <label for="reply">Entity response</label><select id="reply"><option value="none">No reply</option><option value="pending">Pending</option><option value="rejected">Rejected</option><option value="unsatisfactory">Unsatisfactory</option><option value="resolved">Resolved</option></select>
-    <label for="reply-date">Response date (if received)</label><input id="reply-date" type="date" min="1900-01-01">
-    </fieldset>
-    <button id="submit" type="submit">Submit complaint</button>
-  </form>
-  <p id="status" role="status" aria-live="polite"></p>
-  <section id="result" hidden></section>
-  <p><a href="/docs">API documentation</a> · <a href="/health">Service health</a></p>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="logo" href="/">
+        <span class="logo-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>
+        <span>GrievanceRouter<small>Investor Protection AI</small></span>
+      </a>
+      <nav class="nav">
+        <a href="/" aria-current="page">Submit</a>
+        <a class="hide-sm" href="/docs">API</a>
+        <a class="hide-sm" href="/api/v1/quality/summary">Quality</a>
+        <a class="hide-sm" href="/health">Health</a>
+        <span class="pill" id="health-pill"><span class="dot"></span><span>Checking status…</span></span>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow">● Multi-agent · RAG · Citation-verified</span>
+      <h1>Route every investor grievance to the <span>right regulator</span>, with evidence.</h1>
+      <p class="lead">Two LangGraph agents investigate each complaint against the SEBI and RBI regulations, then independently verify every citation against the source PDFs before recommending a route for a grievance officer.</p>
+      <div class="stats">
+        <div class="stat"><b>3</b><span>Regulatory frameworks</span></div>
+        <div class="stat"><b data-chunks>539</b><span>Indexed clause chunks</span></div>
+        <div class="stat"><b>2</b><span>Cooperating AI agents</span></div>
+        <div class="stat"><b>95.5%</b><span>Routing accuracy (22-case eval)</span></div>
+        <div class="stat"><b>100%</b><span>Citations hash-verified</span></div>
+      </div>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <div class="grid">
+      <div class="card">
+        <div class="card-h">
+          <span class="step-num">1</span>
+          <div><h2>File a grievance</h2><div class="sub">Synthetic data only. The result is a routing recommendation, not a decision.</div></div>
+        </div>
+        <div class="card-b">
+          <div class="chips" aria-label="Load an example complaint">
+            <button type="button" class="chip" data-demo="fd">Bank FD example <i>RBI</i></button>
+            <button type="button" class="chip" data-demo="mf">Mutual fund example <i>AMC</i></button>
+            <button type="button" class="chip" data-demo="mixed">Bank + broker <i>Human</i></button>
+            <button type="button" class="chip" data-demo="unknown">Insufficient evidence example <i>Human</i></button>
+          </div>
+
+          <form id="complaint-form" novalidate>
+            <div class="row">
+              <div class="field">
+                <label for="entity">Entity complained against</label>
+                <input id="entity" required maxlength="200" placeholder="e.g. Axis Bank Ltd">
+              </div>
+              <div class="field">
+                <label for="entity-type">Entity type (as you understand it)</label>
+                <select id="entity-type">
+                  <option value="unknown">Not sure</option><option value="bank">Bank</option><option value="amc">Asset management company</option>
+                  <option value="broker">Stock broker</option><option value="depository">Depository</option><option value="rta">Registrar / transfer agent</option>
+                  <option value="listed_company">Listed company</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="complaint">Describe your complaint <span class="counter"><span id="count">0</span> / 5000</span></label>
+              <textarea id="complaint" required minlength="20" maxlength="5000" rows="6" placeholder="What happened, with which product, and what outcome you expected…"></textarea>
+              <div class="hint">At least 20 characters. Do not include account numbers or real personal data.</div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="regulator">Regulator you intended to approach</label>
+                <select id="regulator"><option value="unknown">Not sure</option><option value="SEBI">SEBI</option><option value="RBI">RBI</option></select>
+              </div>
+              <div class="field">
+                <label for="amount">Amount involved (₹, optional)</label>
+                <input id="amount" type="number" min="0" max="1000000000" step="0.01" placeholder="e.g. 50000">
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label for="incident-date">Incident date (optional)</label>
+                <input id="incident-date" type="date" min="1900-01-01">
+              </div>
+              <div></div>
+            </div>
+
+            <label class="toggle" for="approached">
+              <input type="checkbox" id="approached">
+              <span><b>I already complained in writing to the entity</b><span>Tick this to add the date and the entity's response. It decides whether you can escalate now or must wait.</span></span>
+            </label>
+
+            <fieldset id="prior-details" disabled>
+              <div class="row">
+                <div class="field">
+                  <label for="prior-date">Date the entity received the complaint</label>
+                  <input id="prior-date" type="date" min="1900-01-01">
+                </div>
+                <div class="field">
+                  <label for="reply">Entity response</label>
+                  <select id="reply"><option value="none">No reply</option><option value="pending">Pending</option><option value="rejected">Rejected</option><option value="unsatisfactory">Unsatisfactory</option><option value="resolved">Resolved</option></select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label for="reply-date">Response date (if received)</label>
+                  <input id="reply-date" type="date" min="1900-01-01">
+                </div>
+                <div></div>
+              </div>
+            </fieldset>
+
+            <div class="actions">
+              <button id="submit" class="btn btn-primary" type="submit">
+                Submit complaint
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </button>
+              <span class="fine">Queued with an idempotency key. You'll be taken to a live results page.</span>
+            </div>
+            <p id="status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="card">
+          <div class="card-h"><span class="step-num">2</span><div><h2>How a complaint is routed</h2></div></div>
+          <div class="card-b">
+            <ol class="flow">
+              <li><span class="ic">⛨</span><div><b>Validate & guardrail</b><span>Schema, date and cross-field checks. Unsafe input is quarantined.</span></div></li>
+              <li><span class="ic">⇄</span><div><b>Queue</b><span>Redis/RQ job with retries and a circuit breaker.</span></div></li>
+              <li><span class="ic">⌕</span><div><b>Investigator agent</b><span>Works out the product and entity, then searches the semantic index.</span></div></li>
+              <li><span class="ic">✓</span><div><b>Verifier agent</b><span>Matches every quote and SHA-256 against the source PDFs.</span></div></li>
+              <li><span class="ic">➜</span><div><b>Route</b><span>Assign to the entity, refer to another regulator, or escalate to a human.</span></div></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2>Regulatory corpus</h2></div>
+          <div class="card-b">
+            <dl class="kv">
+              <dt>SEBI SCORES Circular</dt><dd>2023/156</dd>
+              <dt>SEBI MF Regulations</dt><dd>1996</dd>
+              <dt>RBI Integrated Ombudsman</dt><dd>2021</dd>
+              <dt>Embeddings</dt><dd>ONNX · Chroma</dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h2>Platform</h2></div>
+          <div class="card-b tags">
+            <span class="tag">FastAPI</span><span class="tag">LangGraph</span><span class="tag">Redis / RQ</span><span class="tag">ChromaDB</span>
+            <span class="tag">OpenTelemetry</span><span class="tag">Prometheus</span><span class="tag">Grafana</span><span class="tag">Jaeger</span>
+            <span class="tag">Locust</span><span class="tag">Docker Compose</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>Securities Investor Grievance Routing · Advisory only. A grievance officer makes every final decision.</span>
+      <nav><a href="/docs">OpenAPI docs</a><a href="/health">Service health</a><a href="/api/v1/costs/summary">Cost summary</a><a href="/metrics">Metrics</a></nav>
+    </div>
+  </footer>
+
+  <script src="/static/common.js"></script>
   <script>
-    const $ = id => document.getElementById(id);
     const demos = {
-      fd: ["Example Bank Ltd", "I invested in a fixed deposit through my bank's app. The interest credited is lower than what I was promised. I want to complain to SEBI."],
-      mf: ["Example AMC", "My mutual fund redemption proceeds haven't been paid for 3 weeks."],
-      unknown: ["Example Insurance", "My health insurance claim was rejected and I need help raising a complaint."]
+      fd: {entity: 'Example Bank Ltd', type: 'bank', regulator: 'SEBI', text: "I invested in a fixed deposit through my bank's app. The interest credited is lower than what I was promised. I want to complain to SEBI."},
+      mf: {entity: 'Example AMC', type: 'amc', regulator: 'SEBI', text: "My mutual fund redemption proceeds haven't been paid for 3 weeks."},
+      mixed: {entity: 'Zerodha & ICICI Bank', type: 'unknown', regulator: 'unknown', text: 'My bank debited money via UPI that failed to reach the broker, and the stock broker also executed an unauthorized trade.'},
+      unknown: {entity: 'Example Insurance', type: 'unknown', regulator: 'unknown', text: 'My health insurance claim was rejected and I need help raising a complaint.'},
     };
-    function syncPriorDetails(){
-      const approached=$('approached').checked;$('prior-details').disabled=!approached;
-      if(!approached){$('prior-date').value='';$('reply').value='none';$('reply-date').value='';}
+    const today = () => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`; };
+
+    function syncPriorDetails() {
+      const approached = $('approached').checked;
+      $('prior-details').disabled = !approached;
+      if (!approached) { $('prior-date').value = ''; $('reply').value = 'none'; $('reply-date').value = ''; }
       validateDates();
     }
-    function validateDates(){
-      const now=new Date();const today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-      for(const id of ['prior-date','reply-date']){
-        const input=$(id);input.max=today;input.setCustomValidity('');
-        if(input.value && (input.value<'1900-01-01' || input.value>today))input.setCustomValidity('Enter a date between 1 January 1900 and today.');
+    function validateDates() {
+      const max = today();
+      for (const id of ['incident-date', 'prior-date', 'reply-date']) {
+        const input = $(id); input.max = max; input.setCustomValidity('');
+        if (input.value && (input.value < '1900-01-01' || input.value > max)) input.setCustomValidity('Enter a date between 1 January 1900 and today.');
       }
-      const prior=$('prior-date').value,reply=$('reply-date').value;
-      if(reply && !prior)$('reply-date').setCustomValidity('Enter the date the entity received your complaint before adding a response date.');
-      else if(prior && reply && reply<prior)$('reply-date').setCustomValidity('The response date cannot be before the complaint date.');
+      const incident = $('incident-date').value, prior = $('prior-date').value, reply = $('reply-date').value;
+      if (prior && incident && prior < incident) $('prior-date').setCustomValidity('The complaint date cannot be before the incident date.');
+      if (reply && !prior) $('reply-date').setCustomValidity('Enter the date the entity received your complaint before adding a response date.');
+      else if (prior && reply && reply < prior) $('reply-date').setCustomValidity('The response date cannot be before the complaint date.');
     }
-    $('approached').addEventListener('change',syncPriorDetails);
-    for(const id of ['prior-date','reply-date'])$(id).addEventListener('input',validateDates);
-    $('complaint-form').addEventListener('invalid',event=>{
-      $('status').className='error';$('status').textContent=event.target.validationMessage;
-    },true);
-    function preset(key){[$('entity').value,$('complaint').value]=demos[key];$('approached').checked=false;syncPriorDetails();}
-    document.querySelectorAll('[data-demo]').forEach(b=>b.onclick=()=>preset(b.dataset.demo));preset('fd');
-    function add(parent,tag,text){const e=document.createElement(tag);e.textContent=text;parent.appendChild(e);return e;}
-    function render(result){const root=$('result');root.replaceChildren();root.hidden=false;
-      add(root,'h2',result.target_authority);add(root,'p',result.uncertain?'Human review required':result.routing.replaceAll('_',' '));
-      add(root,'h3','What to do now');add(root,'p',result.immediate_action);
-      add(root,'h3','Reasoning');add(root,'p',result.rationale);
-      add(root,'p','Product: '+result.product+' · Entity: '+result.entity_type+' · Eligibility: '+result.eligibility.replaceAll('_',' '));
-      add(root,'h3','Next steps');const list=add(root,'ol','');result.next_steps.forEach(s=>add(list,'li',s));
-      add(root,'h3','Regulatory evidence');result.regulatory_citations.forEach(c=>{const d=add(root,'details','');add(d,'summary',`${c.document_id} · §${c.section} · PDF page ${c.page}`);add(d,'pre',c.quote);add(d,'small',`${c.filename} | ${c.chunk_id} | SHA-256: ${c.sha256}`);});
-      add(root,'p',result.verification);const trace=add(root,'details','');add(trace,'summary','Agent handoff and retrieval trace');result.agent_trace.forEach(e=>add(trace,'p',e.agent+' → '+e.action+': '+e.detail));
+    function count() { $('count').textContent = $('complaint').value.length; }
+    function preset(key) {
+      const d = demos[key];
+      $('entity').value = d.entity; $('entity-type').value = d.type; $('regulator').value = d.regulator; $('complaint').value = d.text;
+      $('amount').value = ''; $('incident-date').value = ''; $('approached').checked = false;
+      syncPriorDetails(); count(); $('status').textContent = ''; $('status').className = '';
     }
-    function validationMessage(detail){
-      if(typeof detail==='string')return detail;
-      const labels={entity_complaint_date:'Complaint date',entity_response_date:'Response date',incident_date:'Incident date',complaint_text:'Complaint',entity_name:'Entity name'};
-      if(Array.isArray(detail))return detail.map(error=>{
-        const field=(error.loc||[]).filter(part=>part!=='body').pop();const label=labels[field]||field;
-        return (label?label+': ':'')+(error.msg||'Check your input').replace(/^Value error, /,'');
-      }).join('\n');
-      return 'Unable to submit the complaint. Please check your input and try again.';
-    }
-    async function json(url,options){const response=await fetch(url,options);const body=await response.json();if(!response.ok)throw Error(validationMessage(body.detail));return body;}
-    $('complaint-form').onsubmit=async event=>{event.preventDefault();validateDates();if(!$('complaint-form').reportValidity())return;$('submit').disabled=true;$('result').hidden=true;$('status').className='';
-      try{const payload={complaint_text:$('complaint').value,entity_name:$('entity').value,approached_entity_first:$('approached').checked};
-        if(payload.approached_entity_first){payload.entity_response=$('reply').value;if($('prior-date').value)payload.entity_complaint_date=$('prior-date').value;if($('reply-date').value)payload.entity_response_date=$('reply-date').value;}
-        const job=await json('/api/v1/grievances',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        const deadline=Date.now()+240000;
-        while(Date.now()<deadline){const state=await json(job.status_url);$('status').textContent=`Run ${job.run_id}: ${state.status}`;
-          if(state.status==='finished'){render(await json(job.result_url));return;}
-          if(['failed','stopped','canceled'].includes(state.status))throw Error(state.error||'Processing failed');
-          await new Promise(resolve=>setTimeout(resolve,1000));}
-        throw Error('Polling timed out. Check the run status at '+job.status_url);
-      }catch(error){$('status').className='error';$('status').textContent=error.message;}finally{$('submit').disabled=false;}
+
+    $('approached').addEventListener('change', syncPriorDetails);
+    for (const id of ['incident-date', 'prior-date', 'reply-date']) $(id).addEventListener('input', validateDates);
+    $('complaint').addEventListener('input', count);
+    document.querySelectorAll('[data-demo]').forEach(b => b.onclick = () => preset(b.dataset.demo));
+    preset('fd');
+
+    $('complaint-form').onsubmit = async event => {
+      event.preventDefault();
+      validateDates();
+      const form = $('complaint-form');
+      if (!form.checkValidity()) {
+        const bad = form.querySelector(':invalid');
+        $('status').className = 'error'; $('status').textContent = bad.validationMessage; bad.focus();
+        return;
+      }
+      $('submit').disabled = true; $('status').className = ''; $('status').textContent = 'Submitting…';
+      try {
+        const payload = {
+          complaint_text: $('complaint').value, entity_name: $('entity').value,
+          entity_type_claimed: $('entity-type').value, named_regulator: $('regulator').value,
+          approached_entity_first: $('approached').checked,
+        };
+        if ($('amount').value !== '') payload.amount_involved_inr = Number($('amount').value);
+        if ($('incident-date').value) payload.incident_date = $('incident-date').value;
+        if (payload.approached_entity_first) {
+          payload.entity_response = $('reply').value;
+          if ($('prior-date').value) payload.entity_complaint_date = $('prior-date').value;
+          if ($('reply-date').value) payload.entity_response_date = $('reply-date').value;
+        }
+        const key = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+        const job = await json('/api/v1/grievances', {method: 'POST', headers: {'Content-Type': 'application/json', 'Idempotency-Key': key}, body: JSON.stringify(payload)});
+        storage('submission:' + job.run_id, {...payload, submitted_at: new Date().toISOString()});
+        location.href = '/result?run=' + encodeURIComponent(job.run_id);
+      } catch (error) {
+        $('status').className = 'error'; $('status').textContent = error.message;
+        $('submit').disabled = false;
+      }
     };
   </script>
 </body>
